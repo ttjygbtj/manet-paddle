@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="c6621aa7-c2cc-4140-95d2-2f8ad01a846f" name="manet-paddle">
+        <fileTransfer rootFolder="/home/b405/manet-pd" accessType="SFTP" host="211.81.55.145" port="22" sshConfigId="d27a2dde-9046-42e5-ad49-14af8aa65832" sshConfig="b405@211.81.55.145:22 password" />
+      </webServer>
+    </option>
+  </component>
+</project>
