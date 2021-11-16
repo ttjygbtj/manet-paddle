@@ -16,7 +16,7 @@ from paddle.autograd import Variable
 
 def as_numpy(v):
     if isinstance(v, Variable):
-        v = v.data
+        v = v
     return v.cpu().numpy()
 
 

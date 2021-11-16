@@ -44,15 +44,15 @@ class Decoder(nn.Layer):
         return x
 
     def _init_weight(self):
-        for m in self.modules():
+        for m in self.sublayers():
             if isinstance(m, nn.Conv2D):
                 kaiming_normal_(m.weight)
             elif isinstance(m, SynchronizedBatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                m.weight.fill_(1)
+                m.bias.zero_()
             elif isinstance(m, nn.BatchNorm2D):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                m.weight.fill_(1)
+                m.bias.zero_()
 
 def build_decoder(num_classes, backbone, BatchNorm):
     return Decoder(num_classes, backbone, BatchNorm)

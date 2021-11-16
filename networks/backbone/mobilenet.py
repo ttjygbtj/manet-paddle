@@ -131,17 +131,17 @@ class MobileNetV2(nn.Layer):
         self.load_state_dict(state_dict)
 
     def _initialize_weights(self):
-        for m in self.modules():
+        for m in self.sublayers():
             if isinstance(m, nn.Conv2D):
-                # n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                # m.weight.data.normal_(0, math.sqrt(2. / n))
+                # n = m._kernel_size[0] * m._kernel_size[1] * m._out_channels
+                # m.weight.normal_(0, math.sqrt(2. / n))
                 kaiming_normal_(m.weight)
             elif isinstance(m, SynchronizedBatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                m.weight.fill_(1)
+                m.bias.zero_()
             elif isinstance(m, nn.BatchNorm2D):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                m.weight.fill_(1)
+                m.bias.zero_()
 
 if __name__ == "__main__":
     input = paddle.rand([1, 3, 512, 512])

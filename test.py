@@ -10,7 +10,7 @@ from dataloaders.davis_2017_f import DAVIS2017_Test, DAVIS2017_Test_Manager, DAV
 import dataloaders.custom_transforms_f as tr
 from davisinteractive.session import DavisInteractiveSession
 from davisinteractive import utils as interactive_utils
-from davisinteractive.dataset import Davis
+from davisinteractiveset import Davis
 from networks.deeplab import DeepLab
 from davisinteractive.utils.scribbles import scribbles2mask, annotated_frames
 import time

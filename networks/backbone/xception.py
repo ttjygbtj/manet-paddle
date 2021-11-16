@@ -24,7 +24,7 @@ class SeparableConv2d(nn.Layer):
         self.pointwise = nn.Conv2D(inplanes, planes, 1, 1, 0, 1, 1, bias=bias)
 
     def forward(self, x):
-        x = fixed_padding(x, self.conv1.kernel_size[0], dilation=self.conv1.dilation[0])
+        x = fixed_padding(x, self.conv1._kernel_size[0], dilation=self.conv1.dilation[0])
         x = self.conv1(x)
         x = self.bn(x)
         x = self.pointwise(x)
@@ -232,16 +232,16 @@ class AlignedXception(nn.Layer):
         return x, low_level_feat
 
     def _init_weight(self):
-        for m in self.modules():
+        for m in self.sublayers():
             if isinstance(m, nn.Conv2D):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                n = m._kernel_size[0] * m._kernel_size[1] * m._out_channels
+                m.weight.normal_(0, math.sqrt(2. / n))
             elif isinstance(m, SynchronizedBatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                m.weight.fill_(1)
+                m.bias.zero_()
             elif isinstance(m, nn.BatchNorm2D):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                m.weight.fill_(1)
+                m.bias.zero_()
 
 
     def _load_pretrained_model(self):

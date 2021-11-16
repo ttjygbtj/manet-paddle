@@ -52,7 +52,7 @@ class DeepLab(nn.Layer):
         return x
 
     def freeze_bn(self):
-        for m in self.modules():
+        for m in self.sublayers():
             if isinstance(m, SynchronizedBatchNorm2d):
                 m.eval()
             elif isinstance(m, nn.BatchNorm2D):

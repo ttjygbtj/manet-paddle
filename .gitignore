@@ -1,2 +1,6 @@
-/saved_model/stage2/
+/saved_model/
 model_best.pth.tar
+/X2Paddle/
+/model_best.pdparams
+/torch-1.10.0-cp38-none-macosx_10_9_x86_64.whl
+/data/

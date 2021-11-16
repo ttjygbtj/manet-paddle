@@ -1,6 +1,8 @@
 import math
 import paddle.nn as nn
-from networks.sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
+# from networks.sync_batchnorm.batchnorm import SynchronizedBatchNorm2d
+from utils.api import normal_, fill_, zero_
+
 
 class Bottleneck(nn.Layer):
     expansion = 4
@@ -123,20 +125,20 @@ class ResNet(nn.Layer):
         return x, low_level_feat
 
     def _init_weight(self):
-        for m in self.modules():
+        for m in self.sublayers():
             if isinstance(m, nn.Conv2D):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
-            elif isinstance(m, SynchronizedBatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                n = m._kernel_size[0] * m._kernel_size[1] * m._out_channels
+                normal_(m.weight, 0, math.sqrt(2. / n))
+            # elif isinstance(m, SynchronizedBatchNorm2d):
+            #     m.weight.fill_(1)
+            #     m.bias.zero_()
             elif isinstance(m, nn.BatchNorm2D):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                fill_(m.weight, 1)
+                zero_(m.bias)
 
     def _load_pretrained_model(self):
         # TODO
-        pretrain_dict = model_zoo.load_url('https://download.pypaddle.org/models/resnet101-5d3b4d8f.pth')
+        pretrain_dict = paddle.load('../../model_best.pth.tar')
         model_dict = {}
         state_dict = self.state_dict()
         for k, v in pretrain_dict.items():

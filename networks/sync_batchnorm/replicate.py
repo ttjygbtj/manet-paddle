@@ -10,7 +10,7 @@
 
 import functools
 
-from paddle.nn.parallel.data_parallel import DataParallel
+from paddle.nn.parallel_parallel import DataParallel
 
 __all__ = [
     'CallbackContext',
@@ -35,11 +35,11 @@ def execute_replication_callbacks(modules):
     of any slave copies.
     """
     master_copy = modules[0]
-    nr_modules = len(list(master_copy.modules()))
+    nr_modules = len(list(master_copy.sublayers()))
     ctxs = [CallbackContext() for _ in range(nr_modules)]
 
     for i, module in enumerate(modules):
-        for j, m in enumerate(module.modules()):
+        for j, m in enumerate(module.sublayers()):
             if hasattr(m, '__data_parallel_replicate__'):
                 m.__data_parallel_replicate__(ctxs[j], i)
 
