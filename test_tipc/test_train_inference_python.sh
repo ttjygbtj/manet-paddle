@@ -322,6 +322,10 @@ else
                 fi
 
                 set_pretrain=$(func_set_params "${pretrain_model_key}" "${pretrain_model_value}")
+                if [[ $MODE =~ "whole_train" ]]; then
+                    train_batch_key=""
+                    train_batch_value=""
+                fi
                 set_batchsize=$(func_set_params "${train_batch_key}" "${train_batch_value}")
                 if [[ $MODE =~ "whole_train" ]]; then
                     train_param_key1=""
@@ -367,7 +371,11 @@ else
                 # run test
                 if [ ${eval_py} != "null" ]; then
                     set_eval_params1=$(func_set_params "${eval_key1}" "${eval_value1}")
-                    eval_cmd="${python} ${eval_py} ${set_use_gpu} ${set_eval_params1}"
+                    if [[ $MODE =~ "lite_infer" ]] && [[ ${train_param_key1} != "null" ]]; then
+                        eval_cmd="${python} ${eval_py} ${set_use_gpu} ${set_eval_params1} ${train_param_key1}=${train_param_value1}"
+                    else
+                        eval_cmd="${python} ${eval_py} ${set_use_gpu} ${set_eval_params1}"
+                    fi
                     eval $eval_cmd
                     status_check $? "${eval_cmd}" "${status_log}"
                 fi
