@@ -312,7 +312,7 @@ class ResNetTSM(nn.Layer):
         #    inputs, [-1, inputs.shape[2], inputs.shape[3], inputs.shape[4]])
 
         #NOTE: As paddlepaddle to_static method need a "pure" model to trim. It means from
-        #  1. the phase of generating data[images, label] from dataloader
+        #  1. the phase of generating data[images, label] from sampler
         #     to
         #  2. last layer of a model, always is FC layer
 

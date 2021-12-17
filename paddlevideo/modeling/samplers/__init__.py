@@ -13,5 +13,6 @@
 # limitations under the License.
 
 from .random_sampler import RandomSampler
+from .sampler_manet import RandomIdentitySampler
 
-__all__ = ['RandomSampler']
+__all__ = ['RandomSampler', 'RandomIdentitySampler']

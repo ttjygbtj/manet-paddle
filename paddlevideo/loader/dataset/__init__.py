@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from .davis_2017_f import DAVIS2017_TrainDataset, DAVIS2017_VOS_TrainDataset, DAVIS2017_Feature_ExtractDataset
 from .video import VideoDataset
 from .frame import FrameDataset
 from .slowfast_video import SFVideoDataset
@@ -22,5 +22,7 @@ from .ava_dataset import AVADataset
 
 __all__ = [
     'VideoDataset', 'FrameDataset', 'SFVideoDataset', 'BMNDataset',
-    'FeatureDataset', 'SkeletonDataset', 'AVADataset'
+    'FeatureDataset', 'SkeletonDataset', 'AVADataset',
+    'DAVIS2017_VOS_TrainDataset', 'DAVIS2017_Feature_ExtractDataset',
+    'DAVIS2017_TrainDataset'
 ]

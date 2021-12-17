@@ -118,7 +118,7 @@ class DistributedShortSampler(BatchSampler):
         for idx in _sample_iter:
             batch_indices.append(
                 (idx, counter %
-                 self.len_batch_sizes))  #to be used in dataloader get_item
+                 self.len_batch_sizes))  #to be used in sampler get_item
             if len(batch_indices) == batch_size:
                 yield batch_indices
                 counter += 1

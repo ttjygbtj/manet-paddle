@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from .deeplab_manet import DeepLab
 from .resnet import ResNet
 from .resnet_tsm import ResNetTSM
 from .resnet_slowfast import ResNetSlowFast
@@ -25,5 +25,6 @@ from .transnetv2 import TransNetV2
 
 __all__ = [
     'ResNet', 'ResNetTSM', 'ResNetTweaksTSM', 'ResNetSlowFast', 'BMN',
-    'ResNetTweaksTSN', 'VisionTransformer', 'STGCN', 'AGCN', 'TransNetV2'
+    'ResNetTweaksTSN', 'VisionTransformer', 'STGCN', 'AGCN', 'TransNetV2',
+    'DeepLab'
 ]

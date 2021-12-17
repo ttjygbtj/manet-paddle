@@ -16,6 +16,7 @@ import paddle
 import itertools
 
 from paddlevideo.utils import get_logger
+
 logger = get_logger("paddlevideo")
 """
 Implement precise bn, which is useful for improving accuracy.
@@ -73,7 +74,7 @@ def do_preciseBN(model, data_loader, parallel, num_iters=200):
             running_var[i] += (bn._variance - running_var[i]) / (ind + 1)
 
     assert ind == num_iters - 1, (
-        "update_bn_stats is meant to run for {} iterations, but the dataloader stops at {} iterations."
+        "update_bn_stats is meant to run for {} iterations, but the sampler stops at {} iterations."
         .format(num_iters, ind))
 
     # Sets the precise bn stats.

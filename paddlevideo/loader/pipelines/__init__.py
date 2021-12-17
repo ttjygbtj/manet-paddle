@@ -17,6 +17,7 @@ from .augmentations import (CenterCrop, Image2Array, JitterScale, MultiCrop,
                             Normalization, PackOutput, RandomCrop, RandomFlip,
                             Scale, TenCrop, UniformCrop)
 from .compose import Compose
+from .custom_transforms_f import Resize_manet, RandomCrop_manet, RandomHorizontalFlip_manet, ToTensor_manet, RandomScale_manet
 from .decode import FeatureDecoder, FrameDecoder, VideoDecoder
 from .decode_sampler import DecodeSampler
 from .mix import Cutmix, Mixup
@@ -30,5 +31,6 @@ __all__ = [
     'Normalization', 'Compose', 'VideoDecoder', 'FrameDecoder', 'Sampler',
     'Mixup', 'Cutmix', 'JitterScale', 'MultiCrop', 'PackOutput', 'TenCrop',
     'UniformCrop', 'DecodeSampler', 'LoadFeat', 'GetMatchMap', 'GetVideoLabel',
-    'AutoPadding', 'SkeletonNorm', 'Iden'
+    'AutoPadding', 'SkeletonNorm', 'Iden', 'Resize_manet', 'RandomCrop_manet',
+    'RandomHorizontalFlip_manet', 'ToTensor_manet', 'RandomScale_manet'
 ]

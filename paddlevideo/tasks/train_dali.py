@@ -50,7 +50,7 @@ def train_dali(cfg, weights=None, parallel=True):
     if parallel:
         model = paddle.DataParallel(model)
 
-    # 2. Construct dali dataloader
+    # 2. Construct dali sampler
     train_loader = TSN_Dali_loader(cfg.DALI_LOADER).build_dali_reader()
 
     # 3. Construct solver.

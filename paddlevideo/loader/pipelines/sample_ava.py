@@ -34,7 +34,6 @@ imread_flags = {
 @PIPELINES.register()
 class SampleFrames:
     """Sample frames from the video. """
-
     def __init__(self,
                  clip_len,
                  frame_interval=1,
@@ -58,12 +57,12 @@ class SampleFrames:
         avg_interval = (num_frames - ori_clip_len + 1) // self.num_clips
         if avg_interval > 0:
             base_offsets = np.arange(self.num_clips) * avg_interval
-            clip_offsets = base_offsets + np.random.randint(
-                avg_interval, size=self.num_clips)
+            clip_offsets = base_offsets + np.random.randint(avg_interval,
+                                                            size=self.num_clips)
         elif num_frames > max(self.num_clips, ori_clip_len):
             clip_offsets = np.sort(
-                np.random.randint(
-                    num_frames - ori_clip_len + 1, size=self.num_clips))
+                np.random.randint(num_frames - ori_clip_len + 1,
+                                  size=self.num_clips))
         elif avg_interval == 0:
             ratio = (num_frames - ori_clip_len + 1.0) / self.num_clips
             clip_offsets = np.around(np.arange(self.num_clips) * ratio)
@@ -100,8 +99,8 @@ class SampleFrames:
             self.clip_len)[None, :] * self.frame_interval
         frame_inds = np.concatenate(frame_inds)
         if self.temporal_jitter:
-            perframe_offsets = np.random.randint(
-                self.frame_interval, size=len(frame_inds))
+            perframe_offsets = np.random.randint(self.frame_interval,
+                                                 size=len(frame_inds))
             frame_inds += perframe_offsets
         frame_inds = frame_inds.reshape((-1, self.clip_len))
         if self.out_of_bound_opt == 'loop':
@@ -133,9 +132,9 @@ class SampleFrames:
                     f'test_mode={self.test_mode})')
         return repr_str
 
+
 class BaseStorageBackend(metaclass=ABCMeta):
     """Abstract class of storage backends. """
-
     @abstractmethod
     def get(self, filepath):
         pass
@@ -144,9 +143,9 @@ class BaseStorageBackend(metaclass=ABCMeta):
     def get_text(self, filepath):
         pass
 
+
 class HardDiskBackend(BaseStorageBackend):
     """Raw hard disks storage backend."""
-
     def get(self, filepath):
         filepath = str(filepath)
         with open(filepath, 'rb') as f:
@@ -158,6 +157,7 @@ class HardDiskBackend(BaseStorageBackend):
         with open(filepath, 'r') as f:
             value_buf = f.read()
         return value_buf
+
 
 class FileClient:
     """A general file client to access files in different backend. """
@@ -212,17 +212,17 @@ class FileClient:
     def get_text(self, filepath):
         return self.client.get_text(filepath)
 
+
 @PIPELINES.register()
 class RawFrameDecode:
     """Load and decode frames with given indices. """
-
     def __init__(self, io_backend='disk', decoding_backend='cv2', **kwargs):
         self.io_backend = io_backend
         self.decoding_backend = decoding_backend
         self.kwargs = kwargs
         self.file_client = None
 
-    def _pillow2array(self,img, flag='color', channel_order='bgr'):
+    def _pillow2array(self, img, flag='color', channel_order='bgr'):
         """Convert a pillow image to numpy array. """
 
         channel_order = channel_order.lower()
@@ -261,7 +261,10 @@ class RawFrameDecode:
                     f'but got {flag}')
         return array
 
-    def _imfrombytes(self,content, flag='color', channel_order='bgr'):#, backend=None):
+    def _imfrombytes(self,
+                     content,
+                     flag='color',
+                     channel_order='bgr'):  # , backend=None):
         """Read an image from bytes. """
 
         img_np = np.frombuffer(content, np.uint8)
@@ -282,7 +285,7 @@ class RawFrameDecode:
 
         directory = results['frame_dir']
         suffix = results['suffix']
-        #modality = results['modality']
+        # modality = results['modality']
 
         if self.file_client is None:
             self.file_client = FileClient(self.io_backend, **self.kwargs)
@@ -297,7 +300,7 @@ class RawFrameDecode:
         for frame_idx in results['frame_inds']:
             frame_idx += offset
             filepath = osp.join(directory, suffix.format(frame_idx))
-            img_bytes = self.file_client.get(filepath) #以二进制方式读取图片
+            img_bytes = self.file_client.get(filepath)  # 以二进制方式读取图片
             # Get frame with channel order RGB directly.
 
             cur_frame = self._imfrombytes(img_bytes, channel_order='rgb')
@@ -326,11 +329,10 @@ class RawFrameDecode:
                     f'decoding_backend={self.decoding_backend})')
         return repr_str
 
+
 @PIPELINES.register()
 class SampleAVAFrames(SampleFrames):
-
     def __init__(self, clip_len, frame_interval=2, test_mode=False):
-
         super().__init__(clip_len, frame_interval, test_mode=test_mode)
 
     def _get_clips(self, center_index, skip_offsets, shot_info):
@@ -348,15 +350,15 @@ class SampleAVAFrames(SampleFrames):
         timestamp_start = results['timestamp_start']
         shot_info = results['shot_info']
 
-        #delta=(timestamp - timestamp_start) 为该帧距离15min视频开头有几秒
-        #center_index=fps*delta为该帧距离15min视频开头有几帧
-        #center_index+1是为了避免后续采样时出现负数? 
-        #后续需要以center_index为中心前后采样视频帧片段
+        # delta=(timestamp - timestamp_start) 为该帧距离15min视频开头有几秒
+        # center_index=fps*delta为该帧距离15min视频开头有几帧
+        # center_index+1是为了避免后续采样时出现负数?
+        # 后续需要以center_index为中心前后采样视频帧片段
         center_index = fps * (timestamp - timestamp_start) + 1
 
-        skip_offsets = np.random.randint(
-            -self.frame_interval // 2, (self.frame_interval + 1) // 2,
-            size=self.clip_len)
+        skip_offsets = np.random.randint(-self.frame_interval // 2,
+                                         (self.frame_interval + 1) // 2,
+                                         size=self.clip_len)
         frame_inds = self._get_clips(center_index, skip_offsets, shot_info)
 
         results['frame_inds'] = np.array(frame_inds, dtype=np.int)
@@ -372,4 +374,3 @@ class SampleAVAFrames(SampleFrames):
                     f'frame_interval={self.frame_interval}, '
                     f'test_mode={self.test_mode})')
         return repr_str
-

@@ -15,11 +15,11 @@
 from abc import abstractmethod
 import paddle.nn as nn
 
-from tools.utils import build_train_helper
+from tools.utils import build_train_helper, build_test_helper, build_valid_helper
 from ... import builder
 
 
-class BasePartitioner(nn.Layer):
+class BaseSegmentationer(nn.Layer):
     """Base class for Partition.
     All partitioner should subclass it.
     All subclass should overwrite:
@@ -42,6 +42,13 @@ class BasePartitioner(nn.Layer):
                 self.head.init_weights()
         else:
             self.head = None
+        self.loss = builder.build_loss(loss)
+        if cfg.train_strategy:
+            self.train_step = build_train_helper(cfg.train_strategy).train_step
+        if cfg.test_strategy:
+            self.train_step = build_test_helper(cfg.test_strategy).test_step
+        if cfg.valid_strategy:
+            self.train_step = build_valid_helper(cfg.valid_strategy).test_step
 
     def init_weights(self):
         """Initialize the model network weights. """

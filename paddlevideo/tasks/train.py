@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from tools.utils import build_train_helper
 from ..metrics.ava_utils import collect_results_cpu
 import shutil
 import pickle
@@ -26,7 +26,7 @@ import paddle.distributed.fleet as fleet
 from paddlevideo.utils import (add_profiler_step, build_record, get_logger,
                                load, log_batch, log_epoch, mkdir, save)
 
-from ..loader.builder import build_dataloader, build_dataset
+from ..loader.builder import build_dataloader, build_dataset, build_custom_dataloader, build_sampler
 from ..modeling.builder import build_model
 from ..solver import build_lr, build_optimizer
 from ..utils import do_preciseBN
@@ -36,8 +36,10 @@ from paddlevideo.utils import (build_record, log_batch, log_epoch, save, load,
 import sys
 import numpy as np
 from pathlib import Path
+
 paddle.framework.seed(1234)
 np.random.seed(1234)
+
 
 def train_model(cfg,
                 weights=None,
@@ -58,6 +60,21 @@ def train_model(cfg,
         use_fleet (bool):
         profiler_options (str): Activate the profiler function Default: None.
     """
+    if cfg.get('TRAIN_STRATEGY'):
+        if cfg['TRAIN_STRATEGY'].get('name'):
+            train_helper = {
+                "train_strategy_name": cfg['train_strategy']['name']
+            }
+            build_train_helper(train_helper)(cfg,
+                                             weights=None,
+                                             parallel=True,
+                                             validate=True,
+                                             amp=False,
+                                             max_iters=None,
+                                             use_fleet=False,
+                                             profiler_options=None)
+            return
+        cfg.MODEL.update({"TRAIN_STRATEGY": cfg['TRAIN_STRATEGY']})
     if use_fleet:
         fleet.init(is_collective=True)
 
@@ -107,33 +124,65 @@ def train_model(cfg,
     if use_fleet:
         model = paddle.distributed_model(model)
 
-    # 2. Construct dataset and dataloader
+    # 2. Construct dataset and sampler
     train_dataset = build_dataset((cfg.DATASET.train, cfg.PIPELINE.train))
-    train_dataloader_setting = dict(batch_size=batch_size,
-                                    num_workers=num_workers,
-                                    collate_fn_cfg=cfg.get('MIX', None),
-                                    places=places)
-
-    train_loader = build_dataloader(train_dataset, **train_dataloader_setting)
+    if cfg.get('DATALOADER').get('train'):
+        if cfg.get('DATALOADER').get('train').get('name'):
+            cfg_copy = cfg.DATALOADER.valid.copy()
+            cfg_copy['dataset'] = train_dataset
+            train_loader = build_custom_dataloader(cfg_copy)
+        else:
+            train_dataloader_setting = cfg.get('DATALOADER').get('train')
+            train_loader = build_dataloader(train_dataset,
+                                            **train_dataloader_setting)
+    else:
+        train_dataloader_setting = dict(batch_size=batch_size,
+                                        num_workers=num_workers,
+                                        collate_fn_cfg=cfg.get('MIX', None),
+                                        sampler=cfg.DATASET.get(
+                                            'sampler', None),
+                                        places=places)
+        train_loader = build_dataloader(train_dataset,
+                                        **train_dataloader_setting)
     if validate:
         valid_dataset = build_dataset((cfg.DATASET.valid, cfg.PIPELINE.valid))
-        validate_dataloader_setting = dict(
-            batch_size=valid_batch_size,
-            num_workers=valid_num_workers,
-            places=places,
-            drop_last=False,
-            shuffle=cfg.DATASET.get(
-                'shuffle_valid',
-                False)  #NOTE: attention lstm need shuffle valid data.
-        )
-        valid_loader = build_dataloader(valid_dataset,
-                                        **validate_dataloader_setting)
+        if cfg.get('DATALOADER').get('valid'):
+            if cfg.get('DATALOADER').get('valid').get('name'):
+                cfg_copy = cfg.DATALOADER.valid.copy()
+                cfg_copy['dataset'] = valid_dataset
+                valid_loader = build_custom_dataloader(cfg_copy)
+            else:
+                validate_dataloader_setting = cfg.get('DATALOADER').get('valid')
+                valid_loader = build_dataloader(valid_dataset,
+                                                **validate_dataloader_setting)
+        else:
+            validate_dataloader_setting = dict(
+                batch_size=valid_batch_size,
+                num_workers=valid_num_workers,
+                places=places,
+                drop_last=False,
+                sampler=cfg.DATASET.get('sampler', None),
+                shuffle=cfg.DATASET.get(
+                    'shuffle_valid',
+                    False)  # NOTE: attention lstm need shuffle valid data.
+            )
+            valid_loader = build_dataloader(valid_dataset,
+                                            **validate_dataloader_setting)
 
     # 3. Construct solver.
     lr = build_lr(cfg.OPTIMIZER.learning_rate, len(train_loader))
+    if cfg.OPTIMIZER.get('parameter_list'):
+        parameter_list = []
+        for params in cfg.OPTIMIZER.parameter_list:
+            for m, param in params.items():
+                for l in param:
+                    parameter_list.append(
+                        getattr(getattr(model, m), l).parameters())
+    else:
+        parameter_list = model.parameters()
     optimizer = build_optimizer(cfg.OPTIMIZER,
                                 lr,
-                                parameter_list=model.parameters())
+                                parameter_list=parameter_list)
     if use_fleet:
         optimizer = fleet.distributed_optimizer(optimizer)
     # Resume
@@ -163,7 +212,7 @@ def train_model(cfg,
     for epoch in range(0, cfg.epochs):
         if epoch < resume_epoch:
             logger.info(
-                f"| epoch: [{epoch+1}] <= resume_epoch: [{ resume_epoch}], continue... "
+                f"| epoch: [{epoch + 1}] <= resume_epoch: [{resume_epoch}], continue... "
             )
             continue
         model.train()
@@ -241,7 +290,7 @@ def train_model(cfg,
             record_list["batch_time"].sum)
         log_epoch(record_list, epoch + 1, "train", ips)
 
-        def evaluate(best):
+        def evaluate(best, **kwargs):
             model.eval()
             results = []
             record_list = build_record(cfg.MODEL)
@@ -249,17 +298,19 @@ def train_model(cfg,
             tic = time.time()
             if parallel:
                 rank = dist.get_rank()
-            #single_gpu_test and multi_gpu_test
+            # single_gpu_test and multi_gpu_test
             for i, data in enumerate(valid_loader):
-                outputs = model(data, mode='valid')
+                if cfg.MODEL.framework == "Manet":
+                    outputs = model(data, mode='valid', step=i)
+                else:
+                    outputs = model(data, mode='valid')
                 if cfg.MODEL.framework == "FastRCNN":
                     results.extend(outputs)
 
-                #log_record
+                # log_record
                 if cfg.MODEL.framework != "FastRCNN":
                     for name, value in outputs.items():
                         record_list[name].update(value, batch_size)
- 
 
                 record_list['batch_time'].update(time.time() - tic)
                 tic = time.time()
@@ -271,11 +322,10 @@ def train_model(cfg,
             if cfg.MODEL.framework == "FastRCNN":
                 if parallel:
                     results = collect_results_cpu(results, len(valid_dataset))
-                if not parallel or (parallel and rank==0):
-                    eval_res = valid_dataset.evaluate( results) 
+                if not parallel or (parallel and rank == 0):
+                    eval_res = valid_dataset.evaluate(results)
                     for name, value in eval_res.items():
                         record_list[name].update(value, valid_batch_size)
-
 
             ips = "avg_ips: {:.5f} instance/sec.".format(
                 valid_batch_size * record_list["batch_time"].count /
@@ -283,12 +333,13 @@ def train_model(cfg,
             log_epoch(record_list, epoch + 1, "val", ips)
 
             best_flag = False
-            if cfg.MODEL.framework == "FastRCNN" and (not parallel or (parallel and rank==0)):
+            if cfg.MODEL.framework == "FastRCNN" and (not parallel or
+                                                      (parallel and rank == 0)):
                 if record_list["mAP@0.5IOU"].val > best:
-                    best = record_list["mAP@0.5IOU"].val 
+                    best = record_list["mAP@0.5IOU"].val
                     best_flag = True
                 return best, best_flag
-            #best2, cfg.MODEL.framework != "FastRCNN":
+            # best2, cfg.MODEL.framework != "FastRCNN":
             for top_flag in ['hit_at_one', 'top1']:
                 if record_list.get(
                         top_flag) and record_list[top_flag].avg > best:
@@ -308,7 +359,7 @@ def train_model(cfg,
         if validate and (epoch % cfg.get("val_interval", 1) == 0
                          or epoch == cfg.epochs - 1):
             with paddle.no_grad():
-                best, save_best_flag = evaluate(best)
+                best, save_best_flag = evaluate(best, epoch)
             # save best
             if save_best_flag:
                 save(optimizer.state_dict(),
@@ -320,7 +371,7 @@ def train_model(cfg,
                         f"Already save the best model (hit_at_one){best}")
                 elif cfg.MODEL.framework == "FastRCNN":
                     logger.info(
-                        f"Already save the best model (mAP@0.5IOU){int(best *10000)/10000}"
+                        f"Already save the best model (mAP@0.5IOU){int(best * 10000) / 10000}"
                     )
                 else:
                     logger.info(
@@ -332,10 +383,10 @@ def train_model(cfg,
             save(
                 optimizer.state_dict(),
                 osp.join(output_dir,
-                         model_name + f"_epoch_{epoch+1:05d}.pdopt"))
+                         model_name + f"_epoch_{epoch + 1:05d}.pdopt"))
             save(
                 model.state_dict(),
                 osp.join(output_dir,
-                         model_name + f"_epoch_{epoch+1:05d}.pdparams"))
+                         model_name + f"_epoch_{epoch + 1:05d}.pdparams"))
 
     logger.info(f'training {model_name} finished')

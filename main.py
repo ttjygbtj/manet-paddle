@@ -6,7 +6,7 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
+# Unless requifFred by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -18,7 +18,7 @@ import numpy as np
 import paddle
 
 from paddlevideo.tasks import (test_model, train_dali, train_model,
-                               train_model_multigrid)
+                               train_model_multigrid, train_model_multistage)
 from paddlevideo.utils import get_config, get_dist_info
 
 
@@ -43,6 +43,9 @@ def parse_args():
     parser.add_argument('--multigrid',
                         action='store_true',
                         help='whether to use multigrid training')
+    parser.add_argument('--multistage',
+                        action='store_true',
+                        help='whether to use multistage training')
     parser.add_argument('-w',
                         '--weights',
                         type=str,
@@ -53,23 +56,27 @@ def parse_args():
     parser.add_argument('--amp',
                         action='store_true',
                         help='whether to open amp training.')
-    parser.add_argument('--validate',
-                        action='store_true',
-                        help='whether to evaluate the checkpoint during training')
-    parser.add_argument('--seed',
-                        type=int,
-                        default=None,
-                        help='fixed all random seeds when the program is running')
-    parser.add_argument('--max_iters',
-                        type=int,
-                        default=None,
-                        help='max iterations when training(this argonly used in test_tipc)')
-    parser.add_argument('-p',
-                        '--profiler_options',
-                        type=str,
-                        default=None,
-                        help='The option of profiler, which should be in format '
-                        '\"key1=value1;key2=value2;key3=value3\".')
+    parser.add_argument(
+        '--validate',
+        action='store_true',
+        help='whether to evaluate the checkpoint during training')
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=None,
+        help='fixed all random seeds when the program is running')
+    parser.add_argument(
+        '--max_iters',
+        type=int,
+        default=None,
+        help='max iterations when training(this argonly used in test_tipc)')
+    parser.add_argument(
+        '-p',
+        '--profiler_options',
+        type=str,
+        default=None,
+        help='The option of profiler, which should be in format '
+        '\"key1=value1;key2=value2;key3=value3\".')
 
     args = parser.parse_args()
     return args
@@ -101,6 +108,15 @@ def main():
         train_model_multigrid(cfg,
                               world_size=world_size,
                               validate=args.validate)
+    elif args.multistage:
+        train_model_multistage(cfg,
+                               weights=args.weights,
+                               parallel=parallel,
+                               validate=args.validate,
+                               use_fleet=args.fleet,
+                               amp=args.amp,
+                               max_iters=args.max_iters,
+                               profiler_options=args.profiler_options)
     else:
         train_model(cfg,
                     weights=args.weights,

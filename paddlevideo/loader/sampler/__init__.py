@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base import BaseWeightedLoss
-from .cross_entropy_loss import CrossEntropyLoss
-from .bmn_loss import BMNLoss
-from .manet_loss import Added_BCEWithLogitsLoss, Added_CrossEntropyLoss
-from .transnetv2_loss import TransNetV2Loss
+from paddlevideo.loader.sampler.sampler_manet import RandomIdentitySampler
 
-__all__ = [
-    'CrossEntropyLoss', 'BMNLoss', 'TransNetV2Loss', 'Added_BCEWithLogitsLoss',
-    'Added_CrossEntropyLoss'
-]
+__all__ = ['RandomIdentitySampler']

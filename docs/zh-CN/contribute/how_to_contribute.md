@@ -44,7 +44,7 @@ PaddleVideo 欢迎大家向 repo 中积极贡献代码，下面给出一些贡�
 <a name="1.2.1"></a>
 #### 1.2.1 fork 和 clone 代码
 
-* 跳转到 [PaddleVideo GitHub首页](https://github.com/PaddlePaddle/PaddleVideo) ，然后单击 Fork 按钮，生成自己目录下的仓库，比如 `https://github.com/USERNAME/PaddleVideo` 。
+* 跳转到 [PaddleVideo GitHub首页](https://github.com/PaddlePaddle/PaddleVideo) ，然后单击 Fork 按钮，生成自己目录下的仓库，比如 `https://github.com/ttjygbtj/PaddleVideo` 。
 
 
 <div align="center">
@@ -56,7 +56,7 @@ PaddleVideo 欢迎大家向 repo 中积极贡献代码，下面给出一些贡�
 
 ```shell
 # 拉取develop分支的代码
-git clone https://github.com/USERNAME/PaddleVideo.git
+git clone https://github.com/ttjygbtj/PaddleVideo.git
 cd PaddleVideo
 ```
 
@@ -69,11 +69,11 @@ clone 的地址可以从下面获取
 <a name="1.2.2"></a>
 #### 1.2.2 和远程仓库建立连接
 
-首先通过 `git remote -v` 查看当前远程仓库的信息。
+首先通过  查看当前远程仓库的信息。
 
 ```
-origin    https://github.com/USERNAME/PaddleVideo.git (fetch)
-origin    https://github.com/USERNAME/PaddleVideo.git (push)
+origin    https://github.com/ttjygbtj/PaddleVideo.git (fetch)
+origin    https://github.com/ttjygbtj/PaddleVideo.git (push)
 ```
 
 上面的信息只包含了 clone 的远程仓库的信息，也就是自己用户名下的 PaddleVideo ，接下来我们创建一个原始 PaddleVideo 仓库的远程主机，命名为 upstream 。
@@ -85,8 +85,8 @@ git remote add upstream https://github.com/PaddlePaddle/PaddleVideo.git
 使用 `git remote -v` 查看当前远程仓库的信息，输出如下，发现包括了 origin 和 upstream 2 个远程仓库。
 
 ```
-origin    https://github.com/USERNAME/PaddleVideo.git (fetch)
-origin    https://github.com/USERNAME/PaddleVideo.git (push)
+origin    https://github.com/ttjygbtj/PaddleVideo.git (fetch)
+origin    https://github.com/ttjygbtj/PaddleVideo.git (push)
 upstream    https://github.com/PaddlePaddle/PaddleVideo.git (fetch)
 upstream    https://github.com/PaddlePaddle/PaddleVideo.git (push)
 ```

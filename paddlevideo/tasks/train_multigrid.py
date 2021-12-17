@@ -164,7 +164,7 @@ def train_model_multigrid(cfg, world_size=1, validate=True):
     if parallel:
         model = paddle.DataParallel(model)
 
-    # 2. Construct dataloader
+    # 2. Construct sampler
     train_loader, valid_loader, precise_bn_loader = \
         construct_loader(cfg,
                          places,

@@ -126,7 +126,6 @@ def parse_file_paths(input_path: str) -> list:
 def main():
     args = parse_args()
     cfg = get_config(args.config, show=False)
-
     model_name = cfg.model_name
     print(f"Inference model({model_name})...")
     InferenceHelper = build_inference_helper(cfg.INFERENCE)

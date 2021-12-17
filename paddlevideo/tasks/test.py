@@ -14,8 +14,9 @@
 
 import paddle
 from paddlevideo.utils import get_logger, load
+from tools.utils import build_test_helper
 
-from ..loader.builder import build_dataloader, build_dataset
+from ..loader.builder import build_dataloader, build_dataset, build_custom_dataloader, build_sampler
 from ..metrics import build_metric
 from ..modeling.builder import build_model
 
@@ -32,6 +33,12 @@ def test_model(cfg, weights, parallel=True):
         parallel (bool): Whether to do multi-cards testing. Default: True.
 
     """
+    if cfg.get('TEST_STRATEGY'):
+        if cfg['TEST_STRATEGY'].get('name'):
+            test_helper = {"name": cfg['test_strategy']['name']}
+            build_test_helper(test_helper)(cfg, weights, parallel=True)
+            return
+        cfg.MODEL.update({"TEST_STRATEGY": cfg['TEST_STRATEGY']})
     # 1. Construct model.
     if cfg.MODEL.get('backbone') and cfg.MODEL.backbone.get('pretrained'):
         cfg.MODEL.backbone.pretrained = ''  # disable pretrain model init
@@ -39,7 +46,7 @@ def test_model(cfg, weights, parallel=True):
     if parallel:
         model = paddle.DataParallel(model)
 
-    # 2. Construct dataset and dataloader.
+    # 2. Construct dataset and sampler.
     cfg.DATASET.test.test_mode = True
     dataset = build_dataset((cfg.DATASET.test, cfg.PIPELINE.test))
     batch_size = cfg.DATASET.get("test_batch_size", 8)
@@ -47,14 +54,23 @@ def test_model(cfg, weights, parallel=True):
     # default num worker: 0, which means no subprocess will be created
     num_workers = cfg.DATASET.get('num_workers', 0)
     num_workers = cfg.DATASET.get('test_num_workers', num_workers)
-    dataloader_setting = dict(batch_size=batch_size,
-                              num_workers=num_workers,
-                              places=places,
-                              drop_last=False,
-                              shuffle=False)
+    if cfg.get('DATALOADER').get('test'):
+        if cfg.get('DATALOADER').get('test').get('name'):
+            cfg_copy = cfg.DATALOADER.test.copy()
+            cfg_copy['dataset'] = dataset
+            data_loader = build_custom_dataloader(cfg_copy)
+        else:
+            dataloader_setting = cfg.get('DATALOADER').get('test')
+            data_loader = build_dataloader(dataset, **dataloader_setting)
+    else:
+        dataloader_setting = dict(batch_size=batch_size,
+                                  num_workers=num_workers,
+                                  places=places,
+                                  drop_last=False,
+                                  sampler=cfg.DATASET.get('sampler', None),
+                                  shuffle=False)
 
-    data_loader = build_dataloader(dataset, **dataloader_setting)
-
+        data_loader = build_dataloader(dataset, **dataloader_setting)
     model.eval()
 
     state_dicts = load(weights)

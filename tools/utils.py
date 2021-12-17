@@ -15,15 +15,32 @@
 import json
 import os
 import sys
+import timeit
 
 import cv2
 import numpy as np
-import paddle
 import paddle.nn.functional as F
 import pandas
 from PIL import Image
+import davisinteractive.robot.interactive_robot as interactive_robot
+from davisinteractive.session import DavisInteractiveSession
+from davisinteractive.utils.scribbles import scribbles2mask, annotated_frames
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
+
+from paddle import nn
+from paddle.vision import ToTensor
+from torch.nn import parallel
+
+from paddlevideo.loader import build_dataset
+from paddlevideo.loader.builder import build_custom_dataloader, build_dataloader
+from paddlevideo.modeling.builder import build_model
+from paddlevideo.utils.manet_utils import damage_masks, int_, _palette, float_, rough_ROI
+import paddle
+from paddlevideo.utils import get_logger, load
+
+logger = get_logger("paddlevideo")
+
 sys.path.append(os.path.abspath(os.path.join(__dir__, '../')))
 from abc import ABC, abstractmethod
 
@@ -37,6 +54,9 @@ from paddlevideo.metrics.bmn_metric import boundary_choose, soft_nms
 from paddlevideo.utils import Registry, build
 
 INFERENCE = Registry('inference')
+TRAIN = Registry('train')
+TEST = Registry('test')
+VALID = Registry('valid')
 
 
 def decode(filepath, args):
@@ -100,6 +120,18 @@ def postprocess(output, args):
 
 def build_inference_helper(cfg):
     return build(cfg, INFERENCE)
+
+
+def build_train_helper(cfg):
+    return build(cfg, TRAIN)
+
+
+def build_test_helper(cfg):
+    return build(cfg, TEST)
+
+
+def build_valid_helper(cfg):
+    return build(cfg, VALID)
 
 
 class Base_Inference_helper():
@@ -307,9 +339,9 @@ class BMN_Inference_helper(Base_Inference_helper):
         proposal_list = []
         df = soft_nms(df, alpha=0.4, t1=0.55, t2=0.9)
         for idx in range(min(100, len(df))):
-            tmp_prop={"score":df.score.values[idx], \
-                      "segment":[max(0,df.xmin.values[idx])*self.video_duration, \
-                                 min(1,df.xmax.values[idx])*self.video_duration]}
+            tmp_prop = {"score": df.score.values[idx], \
+                        "segment": [max(0, df.xmin.values[idx]) * self.video_duration, \
+                                    min(1, df.xmax.values[idx]) * self.video_duration]}
             proposal_list.append(tmp_prop)
 
         result_dict[self.feat_path] = proposal_list
@@ -478,7 +510,7 @@ class STGCN_Inference_helper(Base_Inference_helper):
 class AttentionLSTM_Inference_helper(Base_Inference_helper):
     def __init__(
             self,
-            num_classes,  #Optional, the number of classes to be classified.
+            num_classes,  # Optional, the number of classes to be classified.
             feature_num,
             feature_dims,
             embedding_size,
@@ -516,7 +548,14 @@ class AttentionLSTM_Inference_helper(Base_Inference_helper):
 
 @INFERENCE.register()
 class TransNetV2_Inference_helper():
-    def __init__(self, num_frames, height, width, num_channels, threshold=0.5, output_path=None, visualize=True):
+    def __init__(self,
+                 num_frames,
+                 height,
+                 width,
+                 num_channels,
+                 threshold=0.5,
+                 output_path=None,
+                 visualize=True):
         self._input_size = (height, width, num_channels)
         self.output_path = output_path
         self.len_frames = 0
@@ -527,13 +566,14 @@ class TransNetV2_Inference_helper():
         # return windows of size 100 where the first/last 25 frames are from the previous/next batch
         # the first and last window must be padded by copies of the first and last frame of the video
         no_padded_frames_start = 25
-        no_padded_frames_end = 25 + 50 - (len(frames) % 50 if len(frames) % 50 != 0 else 50)  # 25 - 74
+        no_padded_frames_end = 25 + 50 - (
+            len(frames) % 50 if len(frames) % 50 != 0 else 50)  # 25 - 74
 
         start_frame = np.expand_dims(frames[0], 0)
         end_frame = np.expand_dims(frames[-1], 0)
-        padded_inputs = np.concatenate(
-            [start_frame] * no_padded_frames_start + [frames] + [end_frame] * no_padded_frames_end, 0
-        )
+        padded_inputs = np.concatenate([start_frame] * no_padded_frames_start +
+                                       [frames] +
+                                       [end_frame] * no_padded_frames_end, 0)
 
         ptr = 0
         while ptr + 100 <= len(padded_inputs):
@@ -552,10 +592,14 @@ class TransNetV2_Inference_helper():
             input_file)
         self.input_file = input_file
         self.filename = os.path.splitext(os.path.split(self.input_file)[1])[0]
-        video_stream, err = ffmpeg.input(self.input_file).output(
-            "pipe:", format="rawvideo", pix_fmt="rgb24", s="48x27"
-        ).run(capture_stdout=True, capture_stderr=True)
-        self.frames = np.frombuffer(video_stream, np.uint8).reshape([-1, 27, 48, 3])
+        video_stream, err = ffmpeg.input(
+            self.input_file).output("pipe:",
+                                    format="rawvideo",
+                                    pix_fmt="rgb24",
+                                    s="48x27").run(capture_stdout=True,
+                                                   capture_stderr=True)
+        self.frames = np.frombuffer(video_stream,
+                                    np.uint8).reshape([-1, 27, 48, 3])
         self.len_frames = len(self.frames)
 
         return self.input_iterator(self.frames)
@@ -590,16 +634,18 @@ class TransNetV2_Inference_helper():
 
         # pad frames so that length of the video is divisible by width
         # pad frames also by len(predictions) pixels in width in order to show predictions
-        pad_with = width - len(frames) % width if len(frames) % width != 0 else 0
-        frames = np.pad(frames, [(0, pad_with), (0, 1), (0, len(predictions)), (0, 0)])
+        pad_with = width - len(frames) % width if len(
+            frames) % width != 0 else 0
+        frames = np.pad(frames, [(0, pad_with), (0, 1), (0, len(predictions)),
+                                 (0, 0)])
 
         predictions = [np.pad(x, (0, pad_with)) for x in predictions]
         height = len(frames) // width
 
         img = frames.reshape([height, width, ih + 1, iw + len(predictions), ic])
         img = np.concatenate(np.split(
-            np.concatenate(np.split(img, height), axis=2)[0], width
-        ), axis=2)[0, :-1]
+            np.concatenate(np.split(img, height), axis=2)[0], width),
+                             axis=2)[0, :-1]
 
         img = Image.fromarray(img)
         draw = ImageDraw.Draw(img)
@@ -616,7 +662,9 @@ class TransNetV2_Inference_helper():
 
                 value = round(p * (ih - 1))
                 if value != 0:
-                    draw.line((x + j, y, x + j, y - value), fill=tuple(color), width=1)
+                    draw.line((x + j, y, x + j, y - value),
+                              fill=tuple(color),
+                              width=1)
         return img
 
     def postprocess(self, outputs, print_output=True):
@@ -630,9 +678,17 @@ class TransNetV2_Inference_helper():
             all_frames_pred = F.sigmoid(paddle.to_tensor(all_frames_logits))
             predictions.append((single_frame_pred.numpy()[0, 25:75, 0],
                                 all_frames_pred.numpy()[0, 25:75, 0]))
-        single_frame_pred = np.concatenate([single_ for single_, all_ in predictions])
-        all_frames_pred = np.concatenate([all_ for single_, all_ in predictions])
-        single_frame_predictions, all_frame_predictions = single_frame_pred[:self.len_frames], all_frames_pred[:self.len_frames]
+        single_frame_pred = np.concatenate(
+            [single_ for single_, all_ in predictions])
+        all_frames_pred = np.concatenate(
+            [all_ for single_, all_ in predictions])
+        single_frame_predictions, all_frame_predictions = single_frame_pred[:
+                                                                            self
+                                                                            .
+                                                                            len_frames], all_frames_pred[:
+                                                                                                         self
+                                                                                                         .
+                                                                                                         len_frames]
 
         scenes = self.predictions_to_scenes(single_frame_predictions)
 
@@ -643,14 +699,25 @@ class TransNetV2_Inference_helper():
         if self.output_path:
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
-            predictions = np.stack([single_frame_predictions, all_frame_predictions], 1)
-            predictions_file = os.path.join(self.output_path, self.filename+"_predictions.txt")
+            predictions = np.stack(
+                [single_frame_predictions, all_frame_predictions], 1)
+            predictions_file = os.path.join(self.output_path,
+                                            self.filename + "_predictions.txt")
             np.savetxt(predictions_file, predictions, fmt="%.6f")
-            scenes_file = os.path.join(self.output_path, self.filename+"_scenes.txt")
+            scenes_file = os.path.join(self.output_path,
+                                       self.filename + "_scenes.txt")
             np.savetxt(scenes_file, scenes, fmt="%d")
 
             if self.visualize:
                 pil_image = self.visualize_predictions(
-                    self.frames, predictions=(single_frame_predictions, all_frame_predictions))
-                image_file = os.path.join(self.output_path, self.filename+"_vis.png")
+                    self.frames,
+                    predictions=(single_frame_predictions,
+                                 all_frame_predictions))
+                image_file = os.path.join(self.output_path,
+                                          self.filename + "_vis.png")
                 pil_image.save(image_file)
+
+
+@INFERENCE.register()
+class Manet_Inference_helper():
+    pass

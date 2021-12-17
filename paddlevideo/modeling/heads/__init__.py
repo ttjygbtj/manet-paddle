@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from .IntVOS import IntVOS
 from .base import BaseHead
 from .tsn_head import TSNHead
 from .tsm_head import TSMHead
@@ -29,5 +29,5 @@ from .bbox_head import BBoxHeadAVA
 __all__ = [
     'BaseHead', 'TSNHead', 'TSMHead', 'ppTSMHead', 'ppTSNHead', 'SlowFastHead',
     'AttentionLstmHead', 'TimeSformerHead', 'STGCNHead', 'TransNetV2Head',
-    'SingleRoIExtractor3D', 'AVARoIHead', 'BBoxHeadAVA'
+    'SingleRoIExtractor3D', 'AVARoIHead', 'BBoxHeadAVA', 'IntVOS'
 ]
