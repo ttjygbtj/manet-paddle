@@ -58,6 +58,15 @@ from paddle.vision import transforms, ToTensor
 from ...samplers import RandomIdentitySampler
 
 
+@PARTITIONERS.register()
+class ManetSegmentationer_Stage2(BaseSegmentationer):
+    def __init__(self, backbone=None, head=None, **cfg):
+        super().__init__(backbone)
+        head_copy = head.copy()
+        head_copy.update({'feature_extracter': self.backbone})
+        self.head = builder.build_head(head_copy)
+
+
 @TRAIN.register()
 class Manet_stage2_train_helper(object):
     def __call__(self,

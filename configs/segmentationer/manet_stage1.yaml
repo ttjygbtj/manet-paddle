@@ -1,5 +1,5 @@
 MODEL: #MODEL field
-  framework: "ManetPartitioner" #Mandatory ["Recognizer1D", "Recognizer2D", "Recognizer3D", "BMNLocalizer"], indicate the type of network, please refer to the 'paddlevideo/modeling/framework/'.
+  framework: "ManetSegmentationer_Stage1" #Mandatory ["Recognizer1D", "Recognizer2D", "Recognizer3D", "BMNLocalizer"], indicate the type of network, please refer to the 'paddlevideo/modeling/framework/'.
   backbone:
     name: "DeepLab" #Optional, indicate the type of backbone, please refer to the 'paddlevideo/modeling/backbones/'.
     backbone: 'resnet'
@@ -10,10 +10,7 @@ MODEL: #MODEL field
   head:
     name: "IntVOS"
     loss_cfg:
-      stage1:
-        name: "Added_BCEWithLogitsLoss"
-      stage2:
-        name: "Added_CrossEntropyLoss"
+      name: "Added_BCEWithLogitsLoss"
       top_k_percent_pixels: 0.15,
       hard_example_mining_step: 50000
     train_bn_mom: 0.9997
@@ -24,7 +21,6 @@ MODEL: #MODEL field
     test_mode: False
     model_max_local_distance: 12
 TRAIN_STRATEGY: #train_strategy
-  name: 'Manet_stage1_train_helper'
   knns: 1
   damage_initial_previous_frame_mask: True
 DATASET: #DATASET field

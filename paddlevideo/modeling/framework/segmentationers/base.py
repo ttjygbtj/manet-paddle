@@ -20,14 +20,14 @@ from ... import builder
 
 
 class BaseSegmentationer(nn.Layer):
-    """Base class for Partition.
-    All partitioner should subclass it.
+    """Base class for Segmentationer.
+    All Segmentationerer should subclass it.
     All subclass should overwrite:
     - Methods:``train_step``, define your train step.
     - Methods:``valid_step``, define your valid step, always the same as train_step.
     - Methods:``test_step``, define your test step.
     """
-    def __init__(self, backbone=None, head=None, loss=None, **cfg):
+    def __init__(self, backbone=None, head=None, **cfg):
         super().__init__()
         if backbone != None:
             self.backbone = builder.build_backbone(backbone)
@@ -42,13 +42,6 @@ class BaseSegmentationer(nn.Layer):
                 self.head.init_weights()
         else:
             self.head = None
-        self.loss = builder.build_loss(loss)
-        if cfg.train_strategy:
-            self.train_step = build_train_helper(cfg.train_strategy).train_step
-        if cfg.test_strategy:
-            self.train_step = build_test_helper(cfg.test_strategy).test_step
-        if cfg.valid_strategy:
-            self.train_step = build_valid_helper(cfg.valid_strategy).test_step
 
     def init_weights(self):
         """Initialize the model network weights. """

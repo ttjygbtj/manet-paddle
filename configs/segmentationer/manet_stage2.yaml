@@ -1,5 +1,5 @@
 MODEL: #MODEL field
-  framework: "ManetPartitioner" #Mandatory ["Recognizer1D", "Recognizer2D", "Recognizer3D", "BMNLocalizer"], indicate the type of network, please refer to the 'paddlevideo/modeling/framework/'.
+  framework: "ManetSegmentationer_Stage2" #Mandatory ["Recognizer1D", "Recognizer2D", "Recognizer3D", "BMNLocalizer"], indicate the type of network, please refer to the 'paddlevideo/modeling/framework/'.
   backbone:
     name: "DeepLab" #Optional, indicate the type of backbone, please refer to the 'paddlevideo/modeling/backbones/'.
     backbone: 'resnet'
@@ -22,16 +22,16 @@ MODEL: #MODEL field
     test_mode: False
     model_max_local_distance: 12
 TRAIN_STRATEGY: #train_strategy
-  name: 'Manet_stage2_train_helper'
+  train_helper: 'Manet_stage2_train_helper'
   knns: 1
   damage_initial_previous_frame_mask: True
   train_total_steps: 101000
   resume_step: 75000
 TEST_STRATEGY:
-  name: 'Manet_test_helper'
+  test_helper: 'Manet_test_helper'
   knns: 1
 VALID_STRATEGY:
-  train_inter_use_true_result:
+  train_inter_use_true_result: True
 DATASET: #DATASET field
   batch_size: 2 #Mandatory, batch size per gpu.
   test_batch_size: 2 #Optional, test batch size per gpu.

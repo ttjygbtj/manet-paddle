@@ -61,10 +61,8 @@ def train_model(cfg,
         profiler_options (str): Activate the profiler function Default: None.
     """
     if cfg.get('TRAIN_STRATEGY'):
-        if cfg['TRAIN_STRATEGY'].get('name'):
-            train_helper = {
-                "train_strategy_name": cfg['train_strategy']['name']
-            }
+        if cfg['TRAIN_STRATEGY'].get('train_helper'):
+            train_helper = {"name": cfg['train_strategy']['train_helper']}
             build_train_helper(train_helper)(cfg,
                                              weights=None,
                                              parallel=True,

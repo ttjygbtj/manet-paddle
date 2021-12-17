@@ -34,8 +34,8 @@ def test_model(cfg, weights, parallel=True):
 
     """
     if cfg.get('TEST_STRATEGY'):
-        if cfg['TEST_STRATEGY'].get('name'):
-            test_helper = {"name": cfg['test_strategy']['name']}
+        if cfg['TEST_STRATEGY'].get('test_helper'):
+            test_helper = {"name": cfg['test_strategy']['test_helper']}
             build_test_helper(test_helper)(cfg, weights, parallel=True)
             return
         cfg.MODEL.update({"TEST_STRATEGY": cfg['TEST_STRATEGY']})
