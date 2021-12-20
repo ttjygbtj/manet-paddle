@@ -20,7 +20,7 @@ from .compose import Compose
 from .custom_transforms_f import Resize_manet, RandomCrop_manet, RandomHorizontalFlip_manet, ToTensor_manet, RandomScale_manet
 from .decode import FeatureDecoder, FrameDecoder, VideoDecoder
 from .decode_sampler import DecodeSampler
-from .mix import Cutmix, Mixup
+from .mix import Cutmix, Mixup, VideoMix
 from .sample import Sampler
 from .skeleton_pipeline import AutoPadding, Iden, SkeletonNorm
 from .augmentations_ava import *
@@ -32,5 +32,6 @@ __all__ = [
     'Mixup', 'Cutmix', 'JitterScale', 'MultiCrop', 'PackOutput', 'TenCrop',
     'UniformCrop', 'DecodeSampler', 'LoadFeat', 'GetMatchMap', 'GetVideoLabel',
     'AutoPadding', 'SkeletonNorm', 'Iden', 'Resize_manet', 'RandomCrop_manet',
-    'RandomHorizontalFlip_manet', 'ToTensor_manet', 'RandomScale_manet'
+    'RandomHorizontalFlip_manet', 'ToTensor_manet', 'RandomScale_manet',
+    'VideoMix', 'FeatureDecoder'
 ]

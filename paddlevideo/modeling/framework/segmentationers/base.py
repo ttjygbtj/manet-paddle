@@ -42,6 +42,7 @@ class BaseSegmentationer(nn.Layer):
                 self.head.init_weights()
         else:
             self.head = None
+        self.cfg = cfg
 
     def init_weights(self):
         """Initialize the model network weights. """

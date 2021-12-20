@@ -1,10 +1,11 @@
 import paddle
 import paddle.nn as nn
 import paddle.nn.functional as F
+
 from ..registry import BACKBONES
-from aspp_manet import build_aspp
-from decoder_manet import build_decoder
-from resnet_manet import build_backbone
+from paddlevideo.modeling.backbones.aspp_manet import build_aspp
+from paddlevideo.modeling.backbones.decoder_manet import build_decoder
+from paddlevideo.modeling.backbones.resnet_manet import build_backbone
 
 
 class FrozenBatchNorm2d(nn.Layer):

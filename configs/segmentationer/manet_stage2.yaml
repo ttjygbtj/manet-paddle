@@ -3,8 +3,8 @@ MODEL: #MODEL field
   backbone:
     name: "DeepLab" #Optional, indicate the type of backbone, please refer to the 'paddlevideo/modeling/backbones/'.
     backbone: 'resnet'
-    output_stride: 16,
-    num_classes: 21,
+    output_stride: 16
+    num_classes: 21
     freeze_bn: False
     pretrained: "data/manet/ .pdparamss"
     train_inter_use_true_result: True
@@ -12,7 +12,7 @@ MODEL: #MODEL field
     name: "IntVOS"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
-      top_k_percent_pixels: 0.15,
+      top_k_percent_pixels: 0.15
       hard_example_mining_step: 50000
     train_bn_mom: 0.9997
     model_aspp_outdim: 256
@@ -104,4 +104,3 @@ log_interval: 50 #Optional, the interval of logger.
 epochs: 6000 #int(200000 * DATASET.batch_size / 60.) #Mandatory, total epoch
 log_level: "INFO" #Optional, the logger level.
 resume_epoch: 0
-output_dir:

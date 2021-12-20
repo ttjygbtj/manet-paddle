@@ -5,10 +5,10 @@ import numpy as np
 import paddle
 from paddle.io import Sampler
 
-from paddlevideo.loader.registry import SAMPLER
+from ..registry import SAMPLERS
 
 
-@SAMPLER.register()
+@SAMPLERS.register()
 class RandomIdentitySampler(Sampler):
     """
     Randomly sample N identities, then for each identity,

@@ -29,27 +29,17 @@ from PIL.Image import Image
 from davisinteractive.session import DavisInteractiveSession
 from davisinteractive.utils.scribbles import scribbles2mask, annotated_frames
 from paddle import nn
-import paddle.optimizer as optim
-from paddlevideo.utils import AverageMeter
 from paddlevideo.utils.manet_utils import float_, _palette, damage_masks, int_, long_, label2colormap, mask_damager, \
     byte_
 from ... import builder
-from ...backbones import DeepLab
-from ...heads import IntVOS
-from ...losses.manet_loss import Added_BCEWithLogitsLoss, Added_CrossEntropyLoss
-from ...registry import PARTITIONERS
+from ...registry import SEGMENTATIONERS
 from .base import BaseSegmentationer
-from davisinteractive import utils as interactive_utils
-from davisinteractive.dataset import Davis
-from paddle.vision import transforms
-
-from ...samplers import RandomIdentitySampler
 
 
-@PARTITIONERS.register()
+@SEGMENTATIONERS.register()
 class ManetSegmentationer_Stage1(BaseSegmentationer):
     def __init__(self, backbone=None, head=None, **cfg):
-        super().__init__(backbone)
+        super().__init__(backbone, **cfg)
         head_copy = head.copy()
         head_copy.update({'feature_extracter': self.backbone})
         self.head = builder.build_head(head_copy)
@@ -70,22 +60,22 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
 
         bs, _, h, w = img2s.shape
         inputs = paddle.concat((ref_imgs, img1s, img2s), 0)
-        if cfg.TRAIN_STRATEGY.damage_initial_previous_frame_mask:
+        if self.cfg['TRAIN_STRATEGY']['damage_initial_previous_frame_mask']:
             try:
                 label1s = damage_masks(label1s)
             except:
                 label1s = label1s
                 print('damage_error')
 
-        tmp_dic = self.model(inputs,
-                             ref_scribble_labels,
-                             label1s,
-                             use_local_map=True,
-                             seq_names=seq_names,
-                             gt_ids=obj_nums,
-                             k_nearest_neighbors=cfg.TRAIN_STRATEGY.knns)
+        tmp_dic = self.head(
+            inputs,
+            ref_scribble_labels,
+            label1s,
+            use_local_map=True,
+            seq_names=seq_names,
+            gt_ids=obj_nums,
+            k_nearest_neighbors=self.cfg['TRAIN_STRATEGY']['knns'])
         label_and_obj_dic = {}
-        label_dic = {}
         for i, seq_ in enumerate(seq_names):
             label_and_obj_dic[seq_] = (label2s[i], obj_nums[i])
         for seq_ in tmp_dic.keys():

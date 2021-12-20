@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 import warnings
 
@@ -263,9 +264,6 @@ def _rotate_mask(mask, max_rot_degrees=3.0):
     m = (shift + (r + inv_shift)).inverse
     scaled_mask = transform.warp(mask, m) > 0.5
     return scaled_mask
-
-
-from __future__ import absolute_import
 
 
 class AverageMeter(object):

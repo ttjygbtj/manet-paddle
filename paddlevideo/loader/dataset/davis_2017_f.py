@@ -34,13 +34,13 @@ class DAVIS2017_VOS_TrainDataset(BaseDataset):
                  split='train',
                  transform=None,
                  rgb=False):
-        super().__init__(file_path, pipeline, data_prefix, test_mode=test_mode)
         self.split = split
         self.rgb = rgb
         self.pipeline = transform
         self.seq_list_file = os.path.join(
-            self.file_path, 'ImageSets', '2017',
+            file_path, 'ImageSets', '2017',
             '_'.join(self.split) + '_instances.txt')
+        super().__init__(file_path, pipeline, data_prefix, test_mode=test_mode)
 
     def load_file(self):
         info = []
@@ -54,7 +54,7 @@ class DAVIS2017_VOS_TrainDataset(BaseDataset):
         self.imglistdic = {}
         if not self._check_preprocess():
             self._preprocess()
-        for seq_name in self.seq_list_file:
+        for seq_name in info:
             images = np.sort(
                 os.listdir(
                     os.path.join(self.file_path, 'JPEGImages/480p/',

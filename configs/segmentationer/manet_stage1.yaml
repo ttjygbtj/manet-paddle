@@ -1,17 +1,17 @@
 MODEL: #MODEL field
-  framework: "ManetSegmentationer_Stage1" #Mandatory ["Recognizer1D", "Recognizer2D", "Recognizer3D", "BMNLocalizer"], indicate the type of network, please refer to the 'paddlevideo/modeling/framework/'.
+  framework: "ManetSegmentationer_Stage1"
   backbone:
-    name: "DeepLab" #Optional, indicate the type of backbone, please refer to the 'paddlevideo/modeling/backbones/'.
+    name: "DeepLab"
+    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
     backbone: 'resnet'
-    output_stride: 16,
-    num_classes: 21,
+    output_stride: 16
+    num_classes: 21
     freeze_bn: False
-    pretrained: "data/manet/ .pdparamss"
   head:
     name: "IntVOS"
     loss_cfg:
       name: "Added_BCEWithLogitsLoss"
-      top_k_percent_pixels: 0.15,
+      top_k_percent_pixels: 0.15
       hard_example_mining_step: 50000
     train_bn_mom: 0.9997
     model_aspp_outdim: 256
@@ -29,7 +29,7 @@ DATASET: #DATASET field
   num_workers: 4 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_VOS_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "data/DAVIS" #Mandatory, train data index file path
+    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
 
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
@@ -48,20 +48,17 @@ DATALOADER:
   train:
     batch_size: 2
     shuffle: True
-    num_workers: 8
+    num_workers: 2
+    places: None
 OPTIMIZER: #OPTIMIZER field
   name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'
   momentum: 0.9
   parameter_list:
-    - head:
-        - feature_extracter:
-        - semantic_embedding:
-        - dynamic_seghead:
+    - head: [feature_extracter, semantic_embedding, dynamic_seghead]
   learning_rate: #Mandatory, the type of learning rate scheduler, associate to the 'paddlevideo/solver/'
     name: 'LambdaDecay'
     learning_rate: 0.0007
     lr_lambda: "lambda last_step: (1 - last_step / (101000 + 1)) ** 0.9"
-    iter_step:
   weight_decay:
     name: 'L1'
     value: 0.00004
@@ -78,4 +75,3 @@ log_interval: 50 #Optional, the interval of logger.
 epochs: 6000 #int(200000 * DATASET.batch_size / 60.) #Mandatory, total epoch
 log_level: "INFO" #Optional, the logger level.
 resume_epoch: 0
-output_dir:

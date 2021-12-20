@@ -10,7 +10,7 @@ from paddlevideo.utils.manet_utils import int_, float_, long_
 from paddlevideo.utils.manet_utils import kaiming_normal_
 
 #############################################################GLOBAL_DIST_MAP
-from .. import BaseHead
+from .base import BaseHead
 
 MODEL_UNFOLD = True
 WRONG_LABEL_PADDING_DISTANCE = 1e20
@@ -113,7 +113,7 @@ def _selected_pixel(ref_labels_flat, ref_emb_flat):
 
 def _nearest_neighbor_features_per_object_in_chunks(
         reference_embeddings_flat, query_embeddings_flat, reference_labels_flat,
-        ref_obj_ids, k_nearest_neighbors, n_chunks, cfg):
+        ref_obj_ids, k_nearest_neighbors, n_chunks, **cfg):
     """Calculates the nearest neighbor features per object in chunks to save mem.
     Uses chunking to bound the memory use.
     Args:
@@ -139,7 +139,7 @@ def _nearest_neighbor_features_per_object_in_chunks(
 
     chunk_size = int_(
         np.ceil((float_(query_embeddings_flat.shape[0]) / n_chunks).numpy()))
-    if cfg.test_mode:
+    if cfg.get('test_mode'):
         reference_labels_flat, reference_embeddings_flat = _selected_pixel(
             reference_labels_flat, reference_embeddings_flat)
     wrong_label_mask = (reference_labels_flat != paddle.unsqueeze(
@@ -171,7 +171,8 @@ def nearest_neighbor_features_per_object(reference_embeddings,
                                          reference_labels,
                                          k_nearest_neighbors,
                                          gt_ids=None,
-                                         n_chunks=100):
+                                         n_chunks=100,
+                                         **cfg):
     """Calculates the distance to the nearest neighbor per object.
     For every pixel of query_embeddings calculate the distance to the
     nearest neighbor in the (possibly subsampled) reference_embeddings per object.
@@ -218,7 +219,7 @@ def nearest_neighbor_features_per_object(reference_embeddings,
         [-1, embedding_dim])
     nn_features = _nearest_neighbor_features_per_object_in_chunks(
         reference_embeddings_flat, query_embeddings_flat, reference_labels_flat,
-        gt_ids, k_nearest_neighbors, n_chunks)
+        gt_ids, k_nearest_neighbors, n_chunks, **cfg)
     nn_features_dim = nn_features.shape[-1]
     nn_features = nn_features.reshape(
         [1, h, w, gt_ids.shape[0], nn_features_dim])
@@ -353,7 +354,7 @@ def local_previous_frame_nearest_neighbor_features_per_object(
 
 #################
 class _res_block(nn.Layer):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, **cfg):
         super(_res_block, self).__init__()
         self.conv1 = nn.Conv2D(in_dim,
                                out_dim,
@@ -361,16 +362,14 @@ class _res_block(nn.Layer):
                                stride=1,
                                padding=1)
         self.relu1 = nn.ReLU()
-        self.bn1 = paddle.nn.BatchNorm2D(out_dim,
-                                         momentum=self.cfg.train_bn_mom)
+        self.bn1 = paddle.nn.BatchNorm2D(out_dim, momentum=cfg['train_bn_mom'])
         self.conv2 = nn.Conv2D(out_dim,
                                out_dim,
                                kernel_size=3,
                                stride=1,
                                padding=1)
         self.relu2 = nn.ReLU()
-        self.bn2 = paddle.nn.BatchNorm2D(out_dim,
-                                         momentum=self.cfg.train_bn_mom)
+        self.bn2 = paddle.nn.BatchNorm2D(out_dim, momentum=cfg['train_bn_mom'])
 
     def forward(self, x):
         res = x
@@ -386,21 +385,19 @@ class _res_block(nn.Layer):
 
 ####################
 class IntSegHead(nn.Layer):
-    def __init__(self, in_dim, emb_dim):
+    def __init__(self, in_dim, emb_dim, **cfg):
         super(IntSegHead, self).__init__()
         self.conv1 = nn.Conv2D(in_dim,
                                emb_dim,
                                kernel_size=7,
                                stride=1,
                                padding=3)
-        self.bn1 = paddle.nn.BatchNorm2D(emb_dim,
-                                         momentum=self.cfg.train_bn_mom)
+        self.bn1 = paddle.nn.BatchNorm2D(emb_dim, momentum=cfg['train_bn_mom'])
         self.relu1 = nn.ReLU(True)
-        self.res1 = _res_block(emb_dim, emb_dim)
-        self.res2 = _res_block(emb_dim, emb_dim)
+        self.res1 = _res_block(emb_dim, emb_dim, **cfg)
+        self.res2 = _res_block(emb_dim, emb_dim, **cfg)
         self.conv2 = nn.Conv2D(256, emb_dim, kernel_size=3, stride=1, padding=1)
-        self.bn2 = paddle.nn.BatchNorm2D(emb_dim,
-                                         momentum=self.cfg.train_bn_mom)
+        self.bn2 = paddle.nn.BatchNorm2D(emb_dim, momentum=cfg['train_bn_mom'])
         self.relu2 = nn.ReLU(True)
         self.conv3 = nn.Conv2D(emb_dim, 1, 1, 1)
 
@@ -418,7 +415,7 @@ class IntSegHead(nn.Layer):
 
 
 class _split_separable_conv2d(nn.Layer):
-    def __init__(self, in_dim, out_dim, kernel_size=7):
+    def __init__(self, in_dim, out_dim, kernel_size=7, **cfg):
         super(_split_separable_conv2d, self).__init__()
         self.conv1 = nn.Conv2D(in_dim,
                                in_dim,
@@ -427,11 +424,10 @@ class _split_separable_conv2d(nn.Layer):
                                padding=int((kernel_size - 1) / 2),
                                groups=in_dim)
         self.relu1 = nn.ReLU(True)
-        self.bn1 = paddle.nn.BatchNorm2D(in_dim, momentum=self.cfg.train_bn_mom)
+        self.bn1 = paddle.nn.BatchNorm2D(in_dim, momentum=cfg['train_bn_mom'])
         self.conv2 = nn.Conv2D(in_dim, out_dim, kernel_size=1, stride=1)
         self.relu2 = nn.ReLU(True)
-        self.bn2 = paddle.nn.BatchNorm2D(out_dim,
-                                         momentum=self.cfg.train_bn_mom)
+        self.bn2 = paddle.nn.BatchNorm2D(out_dim, momentum=cfg['train_bn_mom'])
         kaiming_normal_(self.conv1.weight, mode='fan_out', nonlinearity='relu')
         kaiming_normal_(self.conv2.weight, mode='fan_out', nonlinearity='relu')
 
@@ -446,12 +442,12 @@ class _split_separable_conv2d(nn.Layer):
 
 
 class DynamicSegHead(nn.Layer):
-    def __init__(self, in_dim, embed_dim):
+    def __init__(self, in_dim, embed_dim, **cfg):
         super(DynamicSegHead, self).__init__()
-        self.layer1 = _split_separable_conv2d(in_dim, embed_dim)
-        self.layer2 = _split_separable_conv2d(embed_dim, embed_dim)
-        self.layer3 = _split_separable_conv2d(embed_dim, embed_dim)
-        self.layer4 = _split_separable_conv2d(embed_dim, embed_dim)
+        self.layer1 = _split_separable_conv2d(in_dim, embed_dim, **cfg)
+        self.layer2 = _split_separable_conv2d(embed_dim, embed_dim, **cfg)
+        self.layer3 = _split_separable_conv2d(embed_dim, embed_dim, **cfg)
+        self.layer4 = _split_separable_conv2d(embed_dim, embed_dim, **cfg)
         self.conv = nn.Conv2D(embed_dim, 1, 1, 1)
         kaiming_normal_(self.conv.weight, mode='fan_out', nonlinearity='relu')
 
@@ -487,26 +483,26 @@ print(c.a)
 @HEADS.register()
 class IntVOS(BaseHead):
     def __init__(self, feature_extracter, **cfg):
-        super(IntVOS, self).__init__(cfg.loss_cfg)
+        super(IntVOS, self).__init__(0, 0, cfg['loss_cfg'])
         self.feature_extracter = feature_extracter  ##embedding extractor
         self.feature_extracter.cls_conv = nn.Sequential()
         self.feature_extracter.upsample4 = nn.Sequential()
         self.semantic_embedding = None
-        self.seperate_conv = nn.Conv2D(self.cfg.model_aspp_outdim,
-                                       self.cfg.model_aspp_outdim,
+        self.seperate_conv = nn.Conv2D(cfg['model_aspp_outdim'],
+                                       cfg['model_aspp_outdim'],
                                        kernel_size=3,
                                        stride=1,
                                        padding=1,
-                                       groups=self.cfg.model_aspp_outdim)
-        self.bn1 = paddle.nn.BatchNorm2D(self.cfg.model_aspp_outdim,
-                                         momentum=self.cfg.train_bn_mom)
+                                       groups=cfg['model_aspp_outdim'])
+        self.bn1 = paddle.nn.BatchNorm2D(cfg['model_aspp_outdim'],
+                                         momentum=cfg['train_bn_mom'])
         self.relu1 = nn.ReLU(True)
-        self.embedding_conv = nn.Conv2D(self.cfg.model_aspp_outdim,
-                                        self.cfg.model_semantic_embedding_dim,
-                                        1, 1)
+        self.embedding_conv = nn.Conv2D(cfg['model_aspp_outdim'],
+                                        cfg['model_semantic_embedding_dim'], 1,
+                                        1)
         self.relu2 = nn.ReLU(True)
-        self.bn2 = paddle.nn.BatchNorm2D(self.cfg.model_semantic_embedding_dim,
-                                         momentum=self.cfg.train_bn_mom)
+        self.bn2 = paddle.nn.BatchNorm2D(cfg['model_semantic_embedding_dim'],
+                                         momentum=cfg['train_bn_mom'])
         self.semantic_embedding = nn.Sequential(*[
             self.seperate_conv, self.bn1, self.relu1, self.embedding_conv,
             self.bn2, self.relu2
@@ -517,18 +513,20 @@ class IntVOS(BaseHead):
                 kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
 
         self.dynamic_seghead = DynamicSegHead(
-            in_dim=self.cfg.model_semantic_embedding_dim + 3,
-            embed_dim=self.cfg.model_head_embedding_dim
-        )  # propagation segm head
-        if self.cfg.model_useintseg:
+            in_dim=cfg['model_semantic_embedding_dim'] + 3,
+            embed_dim=cfg['model_head_embedding_dim'],
+            **cfg)  # propagation segm head
+        if cfg['model_useintseg']:
             self.inter_seghead = IntSegHead(
-                in_dim=self.cfg.model_semantic_embedding_dim + 3,
-                emb_dim=self.cfg.model_head_embedding_dim)
+                in_dim=cfg['model_semantic_embedding_dim'] + 3,
+                emb_dim=cfg['model_head_embedding_dim'],
+                **cfg)
         else:
             self.inter_seghead = DynamicSegHead(
-                in_dim=self.cfg.model_semantic_embedding_dim + 2,
-                embed_dim=self.cfg.model_head_embedding_dim
-            )  # interaction segm head
+                in_dim=cfg['model_semantic_embedding_dim'] + 2,
+                embed_dim=cfg['model_head_embedding_dim'],
+                **cfg)  # interaction segm head
+        self.cfg = cfg
 
     def forward(self,
                 x=None,
@@ -557,7 +555,8 @@ class IntVOS(BaseHead):
                 previous_frame_mask, normalize_nearest_neighbor_distances,
                 use_local_map, seq_names, gt_ids, k_nearest_neighbors,
                 global_map_tmp_dic, local_map_dics, interaction_num,
-                start_annotated_frame, frame_num, self.dynamic_seghead)
+                start_annotated_frame, frame_num, self.dynamic_seghead,
+                **self.cfg)
             return dic
 
         else:
@@ -567,7 +566,8 @@ class IntVOS(BaseHead):
                 previous_frame_mask, normalize_nearest_neighbor_distances,
                 use_local_map, seq_names, gt_ids, k_nearest_neighbors,
                 global_map_tmp_dic, local_map_dics, interaction_num,
-                start_annotated_frame, frame_num, self.dynamic_seghead)
+                start_annotated_frame, frame_num, self.dynamic_seghead,
+                **self.cfg)
             return dic, global_map_tmp_dic
 
     def extract_feature(self, x):
@@ -591,14 +591,15 @@ class IntVOS(BaseHead):
                      interaction_num=None,
                      start_annotated_frame=None,
                      frame_num=None,
-                     dynamic_seghead=None):
+                     dynamic_seghead=None,
+                     **cfg):
         """return: feature_embedding,global_match_map,local_match_map,previous_frame_mask"""
         ###############
 
         global_map_tmp_dic = global_map_tmp_dic
         dic_tmp = {}
         bs, c, h, w = current_frame_embedding.shape
-        if self.cfg.test_mode:
+        if cfg.get('test_mode'):
             scale_ref_scribble_label = float_(ref_scribble_label)
         else:
             scale_ref_scribble_label = paddle.nn.functional.interpolate(
@@ -660,7 +661,7 @@ class IntVOS(BaseHead):
                     query_embedding=seq_current_frame_embedding,
                     prev_frame_labels=seq_previous_frame_label,
                     gt_ids=ref_obj_ids,
-                    max_distance=self.cfg.model_max_local_distance)
+                    max_distance=cfg['model_max_local_distance'])
             else:
                 prev_frame_nn_features_n, _ = nearest_neighbor_features_per_object(
                     reference_embeddings=seq_prev_frame_embedding,

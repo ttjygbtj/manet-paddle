@@ -28,14 +28,6 @@ from davisinteractive.utils.scribbles import scribbles2mask, annotated_frames
 
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 
-from paddle import nn
-from paddle.vision import ToTensor
-from torch.nn import parallel
-
-from paddlevideo.loader import build_dataset
-from paddlevideo.loader.builder import build_custom_dataloader, build_dataloader
-from paddlevideo.modeling.builder import build_model
-from paddlevideo.utils.manet_utils import damage_masks, int_, _palette, float_, rough_ROI
 import paddle
 from paddlevideo.utils import get_logger, load
 

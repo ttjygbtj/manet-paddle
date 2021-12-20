@@ -171,11 +171,12 @@ def train_model(cfg,
     lr = build_lr(cfg.OPTIMIZER.learning_rate, len(train_loader))
     if cfg.OPTIMIZER.get('parameter_list'):
         parameter_list = []
-        for params in cfg.OPTIMIZER.parameter_list:
-            for m, param in params.items():
-                for l in param:
-                    parameter_list.append(
-                        getattr(getattr(model, m), l).parameters())
+        for mm in cfg.OPTIMIZER.parameter_list:
+            for m, params in mm.items():
+                for n in params:
+                    parameter_list.extend(
+                        getattr(getattr(model, m), n).parameters())
+        cfg.OPTIMIZER.pop('parameter_list')
     else:
         parameter_list = model.parameters()
     optimizer = build_optimizer(cfg.OPTIMIZER,
@@ -232,7 +233,7 @@ def train_model(cfg,
             # AMP #
             if amp:
                 with paddle.amp.auto_cast(custom_black_list={"reduce_mean"}):
-                    outputs = model(data, mode='train')
+                    outputs = model(data, mode='train', step=i)
 
                 avg_loss = outputs['loss']
                 scaled = scaler.scale(avg_loss)
@@ -242,7 +243,7 @@ def train_model(cfg,
                 optimizer.clear_grad()
 
             else:
-                outputs = model(data, mode='train')
+                outputs = model(data, mode='train', step=i)
 
                 # 4.2 backward
                 if use_gradient_accumulation and i == 0:  # Use gradient accumulation strategy

@@ -53,7 +53,7 @@ class Resize_manet(object):
             to output_size keeping aspect ratio the same.
     """
     def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
+        assert isinstance(output_size, (int, list))
         if isinstance(output_size, int):
             self.output_size = (output_size, output_size)
         else:
@@ -102,7 +102,7 @@ class RandomCrop_manet(object):
             is made.
     """
     def __init__(self, output_size, step=None):
-        assert isinstance(output_size, (int, tuple))
+        assert isinstance(output_size, (int, list))
         if isinstance(output_size, int):
             self.output_size = (output_size, output_size)
         else:

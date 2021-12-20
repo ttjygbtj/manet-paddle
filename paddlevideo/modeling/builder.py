@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .registry import BACKBONES, HEADS, LOSSES, RECOGNIZERS, LOCALIZERS, ROI_EXTRACTORS, DETECTORS, BBOX_ASSIGNERS, BBOX_SAMPLERS, BBOX_CODERS, PARTITIONERS
+from .registry import BACKBONES, HEADS, LOSSES, RECOGNIZERS, LOCALIZERS, ROI_EXTRACTORS, DETECTORS, BBOX_ASSIGNERS, \
+    BBOX_SAMPLERS, BBOX_CODERS, PARTITIONERS, SEGMENTATIONERS
 from ..utils import build
 
 
@@ -71,9 +72,9 @@ def build_localizer(cfg):
     return build(cfg, LOCALIZERS, key='framework')
 
 
-def build_detector(cfg, train_cfg=None, test_cfg=None):
+def build_segmentationer(cfg, train_cfg=None, test_cfg=None):
     """Build detector."""
-    return build(cfg, DETECTORS, key='framework')
+    return build(cfg, SEGMENTATIONERS, key='framework')
 
 
 def build_detector(cfg, train_cfg=None, test_cfg=None):
@@ -97,5 +98,7 @@ def build_model(cfg):
         return build_partitioner(cfg)
     elif framework_type in DETECTORS:
         return build_detector(cfg)
+    elif framework_type in SEGMENTATIONERS:
+        return build_segmentationer(cfg)
     else:
         raise NotImplementedError

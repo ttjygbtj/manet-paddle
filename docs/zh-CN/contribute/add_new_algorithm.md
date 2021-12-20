@@ -8,6 +8,112 @@ PaddleVideo将一个算法分解为以下几个部分，并对各部分进行模
 * [4. 训练策略](#4)
 * [5. 指标评估](#5)
 
+示例代码如下：
+```python
+import numpy as np
+import paddle
+from paddle.io import Dataset, DataLoader
+import paddle.nn as nn
+
+# 1. 数据加载和处理
+## 1.2 数据预处理Pipeline
+class ExamplePipeline(object):
+    """ Example Pipeline"""
+    def __init__(self, mean=0, std=1.0):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, results):
+        data = results['data']
+        norm_data = (data - self.mean) / self.std
+        results['data'] = norm_data
+        return results
+
+## 1.1 数据集类
+class ExampleDataset(Dataset):
+    """ExampleDataset"""
+    def __init__(self):
+        super(ExampleDataset, self).__init__()
+        self.x = np.random.rand(100, 20, 20)
+        self.y = np.random.randint(10, size = (100, 1))
+
+    def __getitem__(self, idx):
+        x_item = self.x[idx]
+        results = {}
+        results['data'] = x_item
+        pipeline = ExamplePipeline()
+        results = pipeline(results)
+        x_item = results['data'].astype('float32')
+        y_item = self.y[idx].astype('int64')
+        return x_item, y_item
+
+    def __len__(self):
+        return self.x.shape[0]
+
+train_dataset = ExampleDataset()
+## 1.3 封装为Dataloader对象
+train_loader = DataLoader(train_dataset, batch_size=10, shuffle=True)
+
+# 2. 网络
+class ExampleModel(nn.Layer):
+    """Example Model"""
+    def __init__(self):
+        super(ExampleModel, self).__init__()
+        ## 2.1 网络Backbobe
+        self.layer1 = paddle.nn.Flatten(1, -1)
+        self.layer2 = paddle.nn.Linear(400, 512)
+        self.layer3 = paddle.nn.ReLU()
+        self.layer4 = paddle.nn.Dropout(0.2)
+        ## 2.2 网络Head
+        self.layer5 = paddle.nn.Linear(512, 10)
+
+    def forward(self, x):
+        """ model forward"""
+        y = self.layer1(x)
+        y = self.layer2(y)
+        y = self.layer3(y)
+        y = self.layer4(y)
+        y = self.layer5(y)
+        return y
+
+model = ExampleModel()
+model.train()
+
+# 3. 优化器
+optim = paddle.optimizer.Adam(parameters=model.parameters())
+
+epochs = 5
+for epoch in range(epochs):
+    for batch_id, data in enumerate(train_loader()):
+        x_data = data[0]  
+        y_data = data[1]  
+        predicts = model(x_data)  
+
+        ## 2.3 网络Loss
+        loss = paddle.nn.functional.cross_entropy(predicts, y_data)
+
+        acc = paddle.metric.accuracy(predicts, y_data)
+
+        loss.backward()
+        print("epoch: {}, batch_id: {}, loss is: {}, acc is: {}".format(epoch, batch_id, loss.numpy(), acc.numpy()))
+
+        optim.step()
+        optim.clear_grad()
+```
+上述代码的运行输出日志如下：
+```txt
+epoch: 0, batch_id: 0, loss is: [2.5613842], acc is: [0.]
+epoch: 0, batch_id: 1, loss is: [2.5776138], acc is: [0.1]
+epoch: 0, batch_id: 2, loss is: [2.551022], acc is: [0.1]
+epoch: 0, batch_id: 3, loss is: [2.782001], acc is: [0.]
+epoch: 0, batch_id: 4, loss is: [2.787499], acc is: [0.1]
+```
+将以上代码集成进PaddleVideo的示例pr参考 [#257](https://github.com/PaddlePaddle/PaddleVideo/pull/257)
+
+下面将分别对每个部分进行介绍，并介绍如何在该部分里添加新算法所需模块。
+
+<a name="1"></a>
+
 ## 1. 数据加载和处理
 
 数据加载和处理部分由`Dataset类`、`预处理Pipeline`和`Dataloader对象`组成。`Dataset类`是数据集类，其中的`__getitem__`方法定义了每一个视频样本数据的处理方式。`预处理Pipeline`定义了数据预处理步骤，包括视频的读取，解码以及数据增强等操作。`预处理定义的Pipeline`通常在`Dataset类`的`__getitem__`方法中被调用，以完成对视频预处理操作。这一部分在[paddlevideo/loader](../../../paddlevideo/loader)下。 各个文件及文件夹作用说明如下:

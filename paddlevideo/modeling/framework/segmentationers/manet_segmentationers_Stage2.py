@@ -15,11 +15,11 @@ import json
 
 from paddlevideo.loader import build_dataloader, build_dataset
 from paddlevideo.loader.builder import build_custom_dataloader
+from paddlevideo.loader.sampler import RandomIdentitySampler
 from paddlevideo.solver import build_lr, build_optimizer
 from paddlevideo.utils import get_logger
 import paddle.distributed as dist
 import paddle.distributed.fleet as fleet
-from torch.nn import parallel
 import os.path as osp
 from paddlevideo.utils import (build_record, log_batch, log_epoch, save, load,
                                mkdir)
@@ -49,16 +49,14 @@ from ...backbones import DeepLab
 from ...builder import build_model
 from ...heads import IntVOS
 from ...losses.manet_loss import Added_BCEWithLogitsLoss, Added_CrossEntropyLoss
-from ...registry import PARTITIONERS
+from ...registry import SEGMENTATIONERS
 from .base import BaseSegmentationer
 from davisinteractive import utils as interactive_utils
 from davisinteractive.dataset import Davis
 from paddle.vision import transforms, ToTensor
 
-from ...samplers import RandomIdentitySampler
 
-
-@PARTITIONERS.register()
+@SEGMENTATIONERS.register()
 class ManetSegmentationer_Stage2(BaseSegmentationer):
     def __init__(self, backbone=None, head=None, **cfg):
         super().__init__(backbone)
@@ -220,13 +218,13 @@ class Manet_stage2_train_helper(object):
                         bs, _, h, w = ref_imgs.shape
                         inputs = ref_imgs
                         with paddle.no_grad():
-                            self.model.feature_extracter.eval()
-                            self.model.semantic_embedding.eval()
-                            ref_frame_embedding = self.model.extract_feature(
+                            self.head.feature_extracter.eval()
+                            self.head.semantic_embedding.eval()
+                            ref_frame_embedding = self.head.extract_feature(
                                 inputs)
                         if r == 0:
                             first_inter = True
-                            tmp_dic = self.model.int_seghead(
+                            tmp_dic = self.head.int_seghead(
                                 ref_frame_embedding=ref_frame_embedding,
                                 ref_scribble_label=ref_scribble_labels,
                                 prev_round_label=None,
@@ -241,7 +239,7 @@ class Manet_stage2_train_helper(object):
                             first_inter = False
                             prev_round_label = sample['prev_round_label']
                             prev_round_label = prev_round_label
-                            tmp_dic = self.model.int_seghead(
+                            tmp_dic = self.head.int_seghead(
                                 ref_frame_embedding=ref_frame_embedding,
                                 ref_scribble_label=ref_scribble_labels,
                                 prev_round_label=prev_round_label,
@@ -345,7 +343,7 @@ class Manet_stage2_train_helper(object):
                     if r != round_ - 1:
                         if r == 0:
                             prev_round_label_dic = {}
-                        self.model.eval()
+                        self.head.eval()
                         with paddle.no_grad():
                             round_scribble = {}
                             frame_num_dic = {}
@@ -414,7 +412,7 @@ class Manet_stage2_train_helper(object):
                                             (label1s_tocat, float_(l)), 0)
 
                                 label1s = label1s_tocat
-                                tmp_dic, global_map_tmp_dic = self.model(
+                                tmp_dic, global_map_tmp_dic = self.head(
                                     inputs,
                                     ref_scribble_labels,
                                     label1s,
@@ -460,7 +458,7 @@ class Manet_stage2_train_helper(object):
 
                     print(f'round {r}', 'trainset evaluating finished!')
                     print('*' * 100)
-                    self.model.train()
+                    self.head.train()
                     print('updating ref frame and label')
                 else:
                     if r != round_ - 1:
@@ -496,7 +494,7 @@ class Manet_stage2_train_helper(object):
                             valid_loader = build_dataloader(
                                 valid_dataset, **validate_dataloader_setting)
 
-                        self.model.eval()
+                        self.head.eval()
                         with paddle.no_grad():
                             for ii, sample in enumerate(valid_loader):
                                 ref_imgs = sample[
@@ -531,7 +529,7 @@ class Manet_stage2_train_helper(object):
 
                         train_dataset.update_ref_frame_and_label(
                             round_scribble, frame_num_dic, prev_round_label_dic)
-                        self.model.train()
+                        self.head.train()
                         print('updating ref frame and label finished!')
 
 
