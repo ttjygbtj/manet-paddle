@@ -45,7 +45,7 @@ PaddleVideo是[飞桨官方](https://www.paddlepaddle.org.cn/?fr=paddleEdu_githu
 | :----------------- | :----------------------------------------------------------: | :------------------------------------------------: | :------: | :-------: |
 | 行为识别|   [**PP-TSM**](./docs/zh-CN/model_zoo/recognition/pp-tsm.md)  |    [Kinetics-400](./docs/zh-CN/dataset/k400.md)    |  Top-1   | **76.16** |
 | 行为识别 |  [**PP-TSN**](./docs/zh-CN/model_zoo/recognition/pp-tsn.md)  |    [Kinetics-400](./docs/zh-CN/dataset/k400.md)    |  Top-1   | **75.06** |
-| 行为识别 | [**PP-TimeSformer**](./docs/zh-CN/model_zoo/recognition/pptimesformer.md) |    [Kinetics-400](./docs/zh-CN/dataset/k400.md)    |  Top-1   |   79.49   |
+| 行为识别 | [**PP-TimeSformer**](./docs/zh-CN/model_zoo/recognition/pp-timesformer.md) |    [Kinetics-400](./docs/zh-CN/dataset/k400.md)    |  Top-1   |   79.49   |
 | 行为识别 | [AGCN](./docs/zh-CN/model_zoo/recognition/agcn.md) | [FSD](./docs/zh-CN/dataset/fsd.md) | Top-1 | 62.29 |
 | 行为识别 | [ST-GCN](./docs/zh-CN/model_zoo/recognition/stgcn.md) | [FSD](./docs/zh-CN/dataset/fsd.md) | Top-1 | 59.07 |
 | 行为识别 | [TimeSformer](./docs/zh-CN/model_zoo/recognition/timesformer.md) |    [Kinetics-400](./docs/zh-CN/dataset/k400.md)    |  Top-1   |   77.29   |
@@ -97,7 +97,7 @@ PaddleVideo是[飞桨官方](https://www.paddlepaddle.org.cn/?fr=paddleEdu_githu
        - [TSM](docs/zh-CN/model_zoo/recognition/tsm.md)
        - [PP-TSM](docs/zh-CN/model_zoo/recognition/pp-tsm.md)
        - [PP-TSN](docs/zh-CN/model_zoo/recognition/pp-tsn.md)
-       - [PP-TimeSformer](docs/zh-CN/model_zoo/recognition/pptimesformer.md)
+       - [PP-TimeSformer](docs/zh-CN/model_zoo/recognition/pp-timesformer.md)
        - [SlowFast](docs/zh-CN/model_zoo/recognition/slowfast.md)
        - [TimeSformer](docs/zh-CN/model_zoo/recognition/timesformer.md)
        - [Attention-LSTM](docs/zh-CN/model_zoo/recognition/attention_lstm.md)
@@ -106,6 +106,8 @@ PaddleVideo是[飞桨官方](https://www.paddlepaddle.org.cn/?fr=paddleEdu_githu
     - [基于骨骼的行为识别](docs/zh-CN/model_zoo/README.md)
        - [ST-GCN](docs/zh-CN/model_zoo/recognition/stgcn.md)
        - [AGCN](docs/zh-CN/model_zoo/recognition/agcn.md)
+    - [视频分割]()
+      - [manet](docs/zh-CN/model_zoo/recognition/manet.md)
     - 时空动作检测 <sup>coming soon</sup>
     - ActBERT: 自监督多模态视频文字学习<sup>coming soon</sup>
 - 项目实战

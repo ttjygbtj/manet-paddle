@@ -9,7 +9,7 @@ start_time=$(date +%s)
 
 # run ava training
 #python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3" --log_dir=logdir.ava_part main.py --validate -w paddle.init_param.pdparams -c configs/detection/ava/ava_part.yaml
-python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logdir.ava_all.1203 main.py --validate -w paddle.init_param.pdparams -c configs/detection/ava/ava_all.yaml
+#python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=logdir.ava_all.1203 main.py --validate -w paddle.init_param.pdparams -c configs/detection/ava/ava_all.yaml
 
 # run tsm training
 #python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7" --log_dir=log_tsm main.py  --validate -c configs/recognition/tsm/tsm_k400_frames.yaml
@@ -44,11 +44,17 @@ python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7"  --log_dir=lo
 # run timesformer training
 # python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7"  --log_dir=log_timesformer  main.py  --validate -c configs/recognition/timesformer/timesformer_k400_videos.yaml
 
+# run pp-timesformer training
+# python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4,5,6,7"  --log_dir=log_pptimesformer  main.py  --validate -c configs/recognition/pptimesformer/pptimesformer_k400_videos.yaml
+
 # run st-gcn training
 # python3.7 main.py -c configs/recognition/stgcn/stgcn_fsd.yaml
 
 # run agcn training
 # python3.7 main.py -c configs/recognition/agcn/agcn_fsd.yaml
+
+# run actbert training
+# python3.7 main.py  --validate -c configs/multimodal/actbert/actbert.yaml
 
 # run tsn dali training
 #python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3" --log_dir=log_tsn main.py --train_dali -c configs/recognition/tsn/tsn_dali.yaml

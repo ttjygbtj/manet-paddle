@@ -1,7 +1,7 @@
 MODEL: #MODEL field
     framework: "RecognizerTransformer" #Mandatory, indicate the type of network, associate to the 'paddlevideo/modeling/framework/' .
     backbone: #Mandatory, indicate the type of backbone, associate to the 'paddlevideo/modeling/backbones/' .
-        name: "VisionTransformer_delta" #Mandatory, The name of backbone.
+        name: "VisionTransformer_tweaks" #Mandatory, The name of backbone.
         pretrained: "data/vit_base_patch16_224_miil_21k_trans.pdparams" #Optional, pretrained model path.
         img_size: 224
         patch_size: 16
@@ -27,18 +27,18 @@ DATASET: #DATASET field
     test_batch_size: 1
     train:
         format: "VideoDataset" #Mandatory, indicate the type of dataset, associate to the 'paddlevidel/loader/dateset'
-        data_prefix: ""
+        data_prefix: "data/k400/videos"
         file_path: "data/k400/train.list" #Mandatory, train data index file path
     valid:
         format: "VideoDataset" #Mandatory, indicate the type of dataset, associate to the 'paddlevidel/loader/dateset'
-        data_prefix: ""
+        data_prefix: "data/k400/videos"
         file_path: "data/k400/val.list" #Mandatory, valid data index file path
     test:
         format: "VideoDataset" #Mandatory, indicate the type of dataset, associate to the 'paddlevidel/loader/dateset'
-        data_prefix: ""
+        data_prefix: "data/k400/videos"
         file_path: "data/k400/val.list" #Mandatory, valid data index file path
 
-PIPELINE: #PIPELINE field TODO.....
+PIPELINE: #PIPELINE field
     train: #Mandotary, indicate the pipeline to deal with the training data, associate to the 'paddlevideo/loader/pipelines/'
         decode:
             name: "VideoDecoder"

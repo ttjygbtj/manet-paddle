@@ -17,7 +17,8 @@ from .augmentations import (CenterCrop, Image2Array, JitterScale, MultiCrop,
                             Normalization, PackOutput, RandomCrop, RandomFlip,
                             Scale, TenCrop, UniformCrop)
 from .compose import Compose
-from .custom_transforms_f import Resize_manet, RandomCrop_manet, RandomHorizontalFlip_manet, ToTensor_manet, RandomScale_manet
+from .custom_transforms_f import Resize_manet, RandomCrop_manet, RandomHorizontalFlip_manet, ToTensor_manet, \
+    RandomScale_manet
 from .decode import FeatureDecoder, FrameDecoder, VideoDecoder
 from .decode_sampler import DecodeSampler
 from .mix import Cutmix, Mixup, VideoMix
@@ -25,6 +26,7 @@ from .sample import Sampler
 from .skeleton_pipeline import AutoPadding, Iden, SkeletonNorm
 from .augmentations_ava import *
 from .sample_ava import *
+from .multimodal import FeaturePadding, RandomCap, Tokenize, RandomMask
 
 __all__ = [
     'Scale', 'RandomCrop', 'CenterCrop', 'RandomFlip', 'Image2Array',
@@ -33,5 +35,6 @@ __all__ = [
     'UniformCrop', 'DecodeSampler', 'LoadFeat', 'GetMatchMap', 'GetVideoLabel',
     'AutoPadding', 'SkeletonNorm', 'Iden', 'Resize_manet', 'RandomCrop_manet',
     'RandomHorizontalFlip_manet', 'ToTensor_manet', 'RandomScale_manet',
-    'VideoMix', 'FeatureDecoder'
+    'VideoMix', 'FeatureDecoder', 'FeaturePadding', 'RandomCap', 'Tokenize',
+    'RandomMask'
 ]

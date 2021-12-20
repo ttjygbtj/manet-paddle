@@ -41,7 +41,6 @@ __all__ = [
     'TSNHead',
     'BaseHead',
     'BaseRecognizer',
-    'Recognizer2d',
     'CrossEntropyLoss',
     'ROI_EXTRACTORS',
     'SingleRoIExtractor3D',

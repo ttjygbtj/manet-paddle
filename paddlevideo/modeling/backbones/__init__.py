@@ -22,9 +22,11 @@ from .vit import VisionTransformer
 from .stgcn import STGCN
 from .agcn import AGCN
 from .transnetv2 import TransNetV2
+from .actbert import BertForMultiModalPreTraining
+from .vit_tweaks import VisionTransformer_tweaks
 
 __all__ = [
     'ResNet', 'ResNetTSM', 'ResNetTweaksTSM', 'ResNetSlowFast', 'BMN',
     'ResNetTweaksTSN', 'VisionTransformer', 'STGCN', 'AGCN', 'TransNetV2',
-    'DeepLab'
+    'DeepLab', 'BertForMultiModalPreTraining', 'VisionTransformer_tweaks'
 ]
