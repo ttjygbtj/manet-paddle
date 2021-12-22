@@ -45,7 +45,7 @@ def build_dataset(cfg):
     """
     # XXX: ugly code here!
     cfg_dataset, cfg_pipeline = cfg
-    cfg_dataset.pipeline = build_pipeline(cfg_pipeline)
+    cfg_dataset['pipeline'] = build_pipeline(cfg_pipeline)
     dataset = build(cfg_dataset, DATASETS, key="format")
     return dataset
 
@@ -68,10 +68,7 @@ def build_batch_pipeline(cfg):
 
 
 def build_custom_dataloader(cfg):
-    if cfg.get('sampler'):
-        sampler = build_sampler(cfg.SAMPLER)
     cfg_copy = cfg.copy()
-    cfg_copy['sampler'] = sampler
     custom_dataloader = build(cfg_copy, DATALOADER)
     return custom_dataloader
 
@@ -95,9 +92,8 @@ def build_dataloader(dataset,
         num_worker (int): num_worker
         shuffle(bool): whether to shuffle the data at every epoch.
     """
-    if kwargs.get('SAMPLER'):
-        sampler = build_sampler(kwargs.SAMPLER)
-    else:
+
+    if not kwargs.get('batch_sampler'):
         if multigrid:
             sampler = DistributedShortSampler(dataset,
                                               batch_sizes=batch_size,
@@ -108,6 +104,7 @@ def build_dataloader(dataset,
                                               batch_size=batch_size,
                                               shuffle=shuffle,
                                               drop_last=drop_last)
+        kwargs.update({'batch_sampler': sampler})
         # NOTE(shipping): when switch the mix operator on, such as: mixup, cutmix.
 
     # batch like: [[img, label, attibute, ...], [imgs, label, attribute, ...], ...] will recollate to:
@@ -131,11 +128,9 @@ def build_dataloader(dataset,
 
     data_loader = DataLoader(
         dataset,
-        batch_sampler=sampler,
         places=places,
         num_workers=num_workers,
         collate_fn=mix_collate_fn if collate_fn_cfg is not None else None,
-        return_list=True,
         **kwargs)
 
     return data_loader

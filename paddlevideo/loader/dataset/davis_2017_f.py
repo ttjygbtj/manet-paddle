@@ -215,18 +215,16 @@ class DAVIS2017_TrainDataset(BaseDataset):
                  split='train',
                  transform=None,
                  rgb=False):
-        super().__init__(file_path, pipeline, data_prefix, test_mode=test_mode)
         self.split = split
-
         self.rgb = rgb
         self.pipeline = transform
         self.seq_list_file = os.path.join(
-            self.file_path, 'ImageSets', '2017',
+            file_path, 'ImageSets', '2017',
             '_'.join(self.split) + '_instances.txt')
         self.seqs = []
         for splt in self.split:
             with open(
-                    os.path.join(self.file_path, 'ImageSets', '2017',
+                    os.path.join(file_path, 'ImageSets', '2017',
                                  self.split + '.txt')) as f:
                 seqs_tmp = f.readlines()
             seqs_tmp = list(map(lambda elem: elem.strip(), seqs_tmp))
@@ -234,6 +232,7 @@ class DAVIS2017_TrainDataset(BaseDataset):
 
         if not self._check_preprocess():
             self._preprocess()
+        super().__init__(file_path, pipeline, data_prefix, test_mode=test_mode)
 
     def load_file(self):
         info = []
@@ -406,7 +405,6 @@ class DAVIS2017_TrainDataset(BaseDataset):
                                     selected_json)
             with open(scribble) as f:
                 scribble = json.load(f)
-                #    print(scribble)
                 scr_frame = annotated_frames(scribble)[0]
                 scr_f = str(scr_frame)
                 while len(scr_f) != 5:
@@ -474,11 +472,10 @@ class DAVIS2017_Feature_ExtractDataset(BaseDataset):
                  split='val',
                  rgb=False,
                  seq_name=None):
-        super().__init__(file_path, pipeline, data_prefix, test_mode=test_mode)
         self.split = split
-
         self.rgb = rgb
         self.seq_name = seq_name
+        super().__init__(file_path, pipeline, data_prefix, test_mode=test_mode)
 
     def load_file(self):
         info = np.sort(
@@ -505,4 +502,4 @@ class DAVIS2017_Feature_ExtractDataset(BaseDataset):
         return sample
 
     def prepare_test(self, idx):
-        return self.prepare_test(idx)
+        return self.prepare_train(idx)

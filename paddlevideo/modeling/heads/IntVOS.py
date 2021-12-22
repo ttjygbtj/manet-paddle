@@ -528,6 +528,9 @@ class IntVOS(BaseHead):
                 **cfg)  # interaction segm head
         self.cfg = cfg
 
+    def loss(self, **kwargs):
+        return self.loss_func(**kwargs)
+
     def forward(self,
                 x=None,
                 ref_scribble_label=None,
@@ -550,24 +553,44 @@ class IntVOS(BaseHead):
 
         if global_map_tmp_dic is None:
             dic = self.prop_seghead(
-                ref_frame_embedding, previous_frame_embedding,
-                current_frame_embedding, ref_scribble_label,
-                previous_frame_mask, normalize_nearest_neighbor_distances,
-                use_local_map, seq_names, gt_ids, k_nearest_neighbors,
-                global_map_tmp_dic, local_map_dics, interaction_num,
-                start_annotated_frame, frame_num, self.dynamic_seghead,
-                **self.cfg)
+                ref_frame_embedding,
+                previous_frame_embedding,
+                current_frame_embedding,
+                ref_scribble_label,
+                previous_frame_mask,
+                normalize_nearest_neighbor_distances,
+                use_local_map,
+                seq_names,
+                gt_ids,
+                k_nearest_neighbors,
+                global_map_tmp_dic,
+                local_map_dics,
+                interaction_num,
+                start_annotated_frame,
+                frame_num,
+                self.dynamic_seghead,
+            )
             return dic
 
         else:
             dic, global_map_tmp_dic = self.prop_seghead(
-                ref_frame_embedding, previous_frame_embedding,
-                current_frame_embedding, ref_scribble_label,
-                previous_frame_mask, normalize_nearest_neighbor_distances,
-                use_local_map, seq_names, gt_ids, k_nearest_neighbors,
-                global_map_tmp_dic, local_map_dics, interaction_num,
-                start_annotated_frame, frame_num, self.dynamic_seghead,
-                **self.cfg)
+                ref_frame_embedding,
+                previous_frame_embedding,
+                current_frame_embedding,
+                ref_scribble_label,
+                previous_frame_mask,
+                normalize_nearest_neighbor_distances,
+                use_local_map,
+                seq_names,
+                gt_ids,
+                k_nearest_neighbors,
+                global_map_tmp_dic,
+                local_map_dics,
+                interaction_num,
+                start_annotated_frame,
+                frame_num,
+                self.dynamic_seghead,
+            )
             return dic, global_map_tmp_dic
 
     def extract_feature(self, x):
@@ -575,27 +598,28 @@ class IntVOS(BaseHead):
         x = self.semantic_embedding(x)
         return x
 
-    def prop_seghead(self,
-                     ref_frame_embedding=None,
-                     previous_frame_embedding=None,
-                     current_frame_embedding=None,
-                     ref_scribble_label=None,
-                     previous_frame_mask=None,
-                     normalize_nearest_neighbor_distances=True,
-                     use_local_map=True,
-                     seq_names=None,
-                     gt_ids=None,
-                     k_nearest_neighbors=1,
-                     global_map_tmp_dic=None,
-                     local_map_dics=None,
-                     interaction_num=None,
-                     start_annotated_frame=None,
-                     frame_num=None,
-                     dynamic_seghead=None,
-                     **cfg):
+    def prop_seghead(
+        self,
+        ref_frame_embedding=None,
+        previous_frame_embedding=None,
+        current_frame_embedding=None,
+        ref_scribble_label=None,
+        previous_frame_mask=None,
+        normalize_nearest_neighbor_distances=True,
+        use_local_map=True,
+        seq_names=None,
+        gt_ids=None,
+        k_nearest_neighbors=1,
+        global_map_tmp_dic=None,
+        local_map_dics=None,
+        interaction_num=None,
+        start_annotated_frame=None,
+        frame_num=None,
+        dynamic_seghead=None,
+    ):
         """return: feature_embedding,global_match_map,local_match_map,previous_frame_mask"""
         ###############
-
+        cfg = self.cfg
         global_map_tmp_dic = global_map_tmp_dic
         dic_tmp = {}
         bs, c, h, w = current_frame_embedding.shape
@@ -744,3 +768,116 @@ class IntVOS(BaseHead):
                 return dic_tmp, global_map_tmp_dic
             else:
                 return dic_tmp, global_map_tmp_dic, local_map_dics
+
+    def int_seghead(self,
+                    ref_frame_embedding=None,
+                    ref_scribble_label=None,
+                    prev_round_label=None,
+                    normalize_nearest_neighbor_distances=True,
+                    global_map_tmp_dic=None,
+                    local_map_dics=None,
+                    interaction_num=None,
+                    seq_names=None,
+                    gt_ids=None,
+                    k_nearest_neighbors=1,
+                    frame_num=None,
+                    first_inter=True):
+        dic_tmp = {}
+        bs, c, h, w = ref_frame_embedding.shape
+        scale_ref_scribble_label = paddle.nn.functional.interpolate(
+            float_(ref_scribble_label), size=(h, w), mode='nearest')
+        scale_ref_scribble_label = int_(scale_ref_scribble_label)
+        if not first_inter:
+            scale_prev_round_label = paddle.nn.functional.interpolate(
+                float_(prev_round_label), size=(h, w), mode='nearest')
+            scale_prev_round_label = int_(scale_prev_round_label)
+        n_chunks = 500
+        for n in range(bs):
+
+            gt_id = paddle.arange(0, gt_ids[n] + 1)
+
+            gt_id = int_(gt_id)
+
+            seq_ref_frame_embedding = ref_frame_embedding[n]
+
+            ########################Local dist map
+            seq_ref_frame_embedding = paddle.transpose(seq_ref_frame_embedding,
+                                                       [1, 2, 0])
+            seq_ref_scribble_label = paddle.transpose(
+                scale_ref_scribble_label[n], [1, 2, 0])
+            nn_features_n = local_previous_frame_nearest_neighbor_features_per_object(
+                prev_frame_embedding=seq_ref_frame_embedding,
+                query_embedding=seq_ref_frame_embedding,
+                prev_frame_labels=seq_ref_scribble_label,
+                gt_ids=gt_id,
+                max_distance=self.cfg['model_max_local_distance'])
+
+            #######
+            ######################Global map update
+            if seq_names[n] not in global_map_tmp_dic:
+                global_map_tmp_dic[seq_names[n]] = paddle.ones_like(
+                    nn_features_n).tile([104, 1, 1, 1, 1])
+            nn_features_n_ = paddle.where(
+                nn_features_n <=
+                global_map_tmp_dic[seq_names[n]][frame_num[n]].unsqueeze(0),
+                nn_features_n,
+                global_map_tmp_dic[seq_names[n]][frame_num[n]].unsqueeze(0))
+
+            ###
+
+            ###
+            #             print('detach 3')
+            # nn_features_n_ = nn_features_n_.detach()
+            global_map_tmp_dic[seq_names[n]][
+                frame_num[n]] = nn_features_n_.detach()[0]
+            ##################Local map update
+            if local_map_dics is not None:
+                local_map_tmp_dic, local_map_dist_dic = local_map_dics
+                if seq_names[n] not in local_map_dist_dic:
+                    local_map_dist_dic[seq_names[n]] = paddle.zeros([104, 9])
+                if seq_names[n] not in local_map_tmp_dic:
+                    local_map_tmp_dic[seq_names[n]] = paddle.ones_like(
+                        nn_features_n).unsqueeze(0).tile([104, 9, 1, 1, 1, 1])
+                local_map_dist_dic[seq_names[n]][frame_num[n]][interaction_num -
+                                                               1] = 0
+
+                local_map_dics = (local_map_tmp_dic, local_map_dist_dic)
+
+            ##################
+            to_cat_current_frame_embedding = ref_frame_embedding[n].unsqueeze(
+                0).tile((gt_id.shape[0], 1, 1, 1))
+            to_cat_nn_feature_n = nn_features_n.squeeze(0).transpose(
+                [2, 3, 0, 1])
+
+            to_cat_scribble_mask_to_cat = (
+                float_(seq_ref_scribble_label) == float_(gt_id)
+            )  # float comparision?
+            to_cat_scribble_mask_to_cat = float_(
+                to_cat_scribble_mask_to_cat.unsqueeze(-1).transpose(
+                    [2, 3, 0, 1]))
+            if not first_inter:
+                seq_prev_round_label = scale_prev_round_label[n].transpose(
+                    [1, 2, 0])
+
+                to_cat_prev_round_to_cat = (
+                    float_(seq_prev_round_label) == float_(gt_id)
+                )  # float comparision?
+                to_cat_prev_round_to_cat = float_(
+                    to_cat_prev_round_to_cat.unsqueeze(-1).transpose(
+                        [2, 3, 0, 1]))
+            else:
+                to_cat_prev_round_to_cat = paddle.zeros_like(
+                    to_cat_scribble_mask_to_cat)
+                to_cat_prev_round_to_cat[0] = 1.
+
+            to_cat = paddle.concat(
+                (to_cat_current_frame_embedding, to_cat_scribble_mask_to_cat,
+                 to_cat_prev_round_to_cat), 1)
+
+            pred_ = self.inter_seghead(to_cat)
+            pred_ = pred_.transpose([1, 0, 2, 3])
+            dic_tmp[seq_names[n]] = pred_
+        if local_map_dics is None:
+            return dic_tmp
+        else:
+            return dic_tmp, local_map_dics

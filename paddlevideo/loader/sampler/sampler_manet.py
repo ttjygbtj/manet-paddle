@@ -1,15 +1,12 @@
 from __future__ import absolute_import
 from collections import defaultdict
 import numpy as np
-
-import paddle
-from paddle.io import Sampler
-
+from .base import BaseSampler
 from ..registry import SAMPLERS
 
 
 @SAMPLERS.register()
-class RandomIdentitySampler(Sampler):
+class RandomIdentitySampler(BaseSampler):
     """
     Randomly sample N identities, then for each identity,
     randomly sample K instances, therefore batch size is N*K.
@@ -20,8 +17,8 @@ class RandomIdentitySampler(Sampler):
         data_source (Dataset): dataset to sample from.
         num_instances (int): number of instances per identity.
     """
-    def __init__(self, sample_list, num_instances=1):
-        self.sample_list = sample_list
+    def __init__(self, dataset, num_instances=1):
+        self.sample_list = dataset.info
         self.num_instances = num_instances
         self.index_dic = defaultdict(list)
         for index, tmp_dic in enumerate(self.sample_list):

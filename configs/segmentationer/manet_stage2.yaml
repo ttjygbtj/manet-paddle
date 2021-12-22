@@ -6,8 +6,7 @@ MODEL: #MODEL field
     output_stride: 16
     num_classes: 21
     freeze_bn: False
-    pretrained: "data/manet/ .pdparamss"
-    train_inter_use_true_result: True
+    pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
   head:
     name: "IntVOS"
     loss_cfg:
@@ -26,7 +25,7 @@ TRAIN_STRATEGY: #train_strategy
   knns: 1
   damage_initial_previous_frame_mask: True
   train_total_steps: 101000
-  resume_step: 75000
+  max_iters: 80001
 TEST_STRATEGY:
   test_helper: 'Manet_test_helper'
   knns: 1
@@ -35,16 +34,16 @@ VALID_STRATEGY:
 DATASET: #DATASET field
   batch_size: 2 #Mandatory, batch size per gpu.
   test_batch_size: 2 #Optional, test batch size per gpu.
-  num_workers: 4 #Mandatory, the number of subprocess on each GPU.
+  num_workers: 0 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "data/DAVIS" #Mandatory, train data index file path
+    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
   valid:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "data/DAVIS" #Mandatory, train data index file path
+    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
   test:
     format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
-    file_path: "data/DAVIS" #Mandotary, test data index file path.
+    file_path: "/home/lc/manet/data/DAVIS" #Mandotary, test data index file path.
 
 
 PIPELINE: #PIPELINE field
@@ -75,20 +74,19 @@ PIPELINE: #PIPELINE field
       - ToTensor_manet:
 
 DATALOADER:
-  test:
-    name: Stage2_DataLoader
-    sampler: RandomIdentitySampler
+  train:
+#    batch_sampler:
+#      name: RandomIdentitySampler
+
 OPTIMIZER: #OPTIMIZER field
   name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'
   momentum: 0.9
   parameter_list:
-    - head:
-        - inter_seghead:
+    - head: [inter_seghead]
   learning_rate: #Mandatory, the type of learning rate scheduler, associate to the 'paddlevideo/solver/'
     name: 'LambdaDecay'
     learning_rate: 0.0007
     lr_lambda: "lambda last_step: (1 - last_step / (101000 + 1)) ** 0.9"
-    iter_step:
   weight_decay:
     name: 'L1'
     value: 0.00004

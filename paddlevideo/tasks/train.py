@@ -62,8 +62,9 @@ def train_model(cfg,
     """
     if cfg.get('TRAIN_STRATEGY'):
         if cfg['TRAIN_STRATEGY'].get('train_helper'):
-            train_helper = {"name": cfg['train_strategy']['train_helper']}
-            build_train_helper(train_helper)(cfg,
+            train_helper = {"name": cfg['TRAIN_STRATEGY']['train_helper']}
+            cfg['TRAIN_STRATEGY'].pop('train_helper')
+            build_train_helper(train_helper)(**cfg,
                                              weights=None,
                                              parallel=True,
                                              validate=True,
@@ -124,24 +125,25 @@ def train_model(cfg,
 
     # 2. Construct dataset and sampler
     train_dataset = build_dataset((cfg.DATASET.train, cfg.PIPELINE.train))
-    if cfg.get('DATALOADER').get('train'):
-        if cfg.get('DATALOADER').get('train').get('name'):
-            cfg_copy = cfg.DATALOADER.valid.copy()
-            cfg_copy['dataset'] = train_dataset
-            train_loader = build_custom_dataloader(cfg_copy)
-        else:
-            train_dataloader_setting = cfg.get('DATALOADER').get('train')
-            train_loader = build_dataloader(train_dataset,
-                                            **train_dataloader_setting)
-    else:
-        train_dataloader_setting = dict(batch_size=batch_size,
-                                        num_workers=num_workers,
-                                        collate_fn_cfg=cfg.get('MIX', None),
-                                        sampler=cfg.DATASET.get(
-                                            'sampler', None),
-                                        places=places)
-        train_loader = build_dataloader(train_dataset,
-                                        **train_dataloader_setting)
+    train_dataloader_setting = dict(batch_size=batch_size,
+                                    num_workers=num_workers,
+                                    collate_fn_cfg=cfg.get('MIX', None),
+                                    places=places)
+    if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train') and cfg.get(
+            'DATALOADER').get('train').get('batch_sampler'):
+        sampler = cfg['DATALOADER']['train']['batch_sampler']
+        sampler['dataset'] = train_dataset
+        sampler = build_sampler(sampler)
+        cfg['DATALOADER']['train'].pop('batch_sampler')
+        train_dataloader_setting['batch_sampler'] = sampler
+    train_dataloader_setting.update({'dataset': train_dataset})
+    train_loader = None
+    if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train'):
+        train_dataloader_setting.update(cfg['DATALOADER']['train'])
+        if cfg['DATALOADER']['train'].get('name'):
+            train_loader = build_custom_dataloader(**train_dataloader_setting)
+    if not train_loader:
+        train_loader = build_dataloader(**train_dataloader_setting)
     if validate:
         valid_dataset = build_dataset((cfg.DATASET.valid, cfg.PIPELINE.valid))
         if cfg.get('DATALOADER').get('valid'):

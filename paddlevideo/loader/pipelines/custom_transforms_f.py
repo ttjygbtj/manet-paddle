@@ -202,17 +202,8 @@ class ToTensor_manet(object):
                 tmp = tmp / 255.
                 tmp -= (0.485, 0.456, 0.406)
                 tmp /= (0.229, 0.224, 0.225)
-
-            # swap color axis because
-            # numpy image: H x W x C
-            # paddle image: C X H X W
-
             tmp = tmp.transpose([2, 0, 1])
-            # print(paddle.in_dynamic_mode())
             results[elem] = paddle.to_tensor(tmp)
-        #             if 'img' in elem:
-        #                 print('tmp tensor', elem, tmp.mean(), tmp.dtype)
-        #                 print('to tensor', elem, results[elem].mean().item(), results[elem].dtype)
         return results
 
 

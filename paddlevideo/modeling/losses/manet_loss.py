@@ -20,15 +20,15 @@ class Added_BCEWithLogitsLoss(BaseWeightedLoss):
         else:
             self.bceloss = nn.BCEWithLogitsLoss(reduction='none')
 
-    def forward(self, label_tmp, y, step, obj_ids, seq_):
-        label_tmp = label_tmp.transpose([1, 2, 0])
-        label_tmp = (float_(label_tmp) == float_(obj_ids))
-        label_tmp = label_tmp.unsqueeze(-1).transpose([3, 2, 0, 1])
-        dic_tmp = {seq_: float_(label_tmp)}
+    def forward(self, dic_tmp, label_tmp, step, obj_ids, seq_):
+
         final_loss = 0
         for seq_name in dic_tmp.keys():
+            label_ = label_tmp[seq_name].transpose([1, 2, 0])
+            label_ = (float_(label_) == float_(obj_ids[seq_name]))
+            label_ = label_.unsqueeze(-1).transpose([3, 2, 0, 1])
             pred_logits = dic_tmp[seq_name]
-            gts = y[seq_name]
+            gts = float_(label_)
             if self.top_k_percent_pixels == None:
                 final_loss += self.bceloss(pred_logits, gts)
             else:
@@ -75,12 +75,12 @@ class Added_CrossEntropyLoss(BaseWeightedLoss):
             self.celoss = nn.CrossEntropyLoss(ignore_index=255,
                                               reduction='none')
 
-    def forward(self, dic_tmp, y, step, seq_, **kwargs):
-        dic_tmp = {seq_: long_(dic_tmp)}
+    def forward(self, dic_tmp, label_tmp, step, seq_, **kwargs):
+
         final_loss = 0
         for seq_name in dic_tmp.keys():
             pred_logits = dic_tmp[seq_name]
-            gts = y[seq_name]
+            gts = long_(label_tmp[seq_name])
             if self.top_k_percent_pixels == None:
                 final_loss += self.celoss(pred_logits, gts)
             else:

@@ -131,7 +131,6 @@ def rough_ROI(ref_scribble_labels):
         no_b = no_background.nonzero()
         (h_min, w_min) = paddle.min(no_b, 0)
         (h_max, w_max) = paddle.max(no_b, 0)
-
         filter_[i, 0,
                 max(h_min - dist, 0):min(h_max + dist, h - 1),
                 max(w_min - dist, 0):min(w_max + dist, w - 1)] = 1
@@ -142,6 +141,23 @@ def rough_ROI(ref_scribble_labels):
 
 
 #####
+def write_dict(state_dict, name, **cfg):
+    lines = []
+    tot = 0
+    for k, v in state_dict.items():
+        # 目前只发现了torch和paddle模型参数命名的这三种不一致
+        # 不一致1
+        if 'num_batches_tracked' in k:
+            tot += 1
+            continue
+        try:
+            line = str(k) + '\t' + str(v.cpu().detach().numpy().shape) + '\n'
+        except:
+            line = str(k) + '\t' + str(v.shape) + '\n'
+        lines.append(line)
+    with open(cfg.get("output_dir", f"./output/{name}"), 'w') as f:
+        f.writelines(lines)
+    print('%d num_batches_tracked skipped' % tot)
 
 
 def damage_masks(labels, shift=True, scale=True, rotate=True):
@@ -547,22 +563,22 @@ def clip_grad_norm_(parameters: _tensor_or_tensors,
     return total_norm
 
 
-def max(a: paddle.Tensor, axis=0, keepdim=True):
-    """ndarray=numpy.array([[1, 2, 3, 4],
-           [4, 3, 2, 1],
-           [5, 6, 7, 8],
-           [8, 7, 6, 5]])
-    np.where(ndarray == np.max(ndarray))
-    (array([2, 3]), array([3, 0]))
-    ndarray[np.where(ndarray == np.max(ndarray))]
-    array([8, 8])
-    """
-    max_ = a.max(axis).unsqueeze(-1)
-    index = paddle.argmax(a, axis=axis, keepdim=keepdim)
-    max_ = max_.numpy()
-    index = index.numpy()
-    # index = paddle.argmax(a, axis=axis, keepdim=keepdim)[-1].flatten()
-    return max_, index
+# def max(a: paddle.Tensor, axis=0, keepdim=True):
+#     """ndarray=numpy.array([[1, 2, 3, 4],
+#            [4, 3, 2, 1],
+#            [5, 6, 7, 8],
+#            [8, 7, 6, 5]])
+#     np.where(ndarray == np.max(ndarray))
+#     (array([2, 3]), array([3, 0]))
+#     ndarray[np.where(ndarray == np.max(ndarray))]
+#     array([8, 8])
+#     """
+#     max_ = a.max(axis).unsqueeze(-1)
+#     index = paddle.argmax(a, axis=axis, keepdim=keepdim)
+#     max_ = max_.numpy()
+#     index = index.numpy()
+#     # index = paddle.argmax(a, axis=axis, keepdim=keepdim)[-1].flatten()
+#     return max_, index
 
 
 def gather(tmp: paddle.Tensor, ind: paddle.Tensor):

@@ -35,8 +35,8 @@ def test_model(cfg, weights, parallel=True):
     """
     if cfg.get('TEST_STRATEGY'):
         if cfg['TEST_STRATEGY'].get('test_helper'):
-            test_helper = {"name": cfg['test_strategy']['test_helper']}
-            build_test_helper(test_helper)(cfg, weights, parallel=True)
+            test_helper = {"name": cfg['TEST_STRATEGY']['test_helper']}
+            build_test_helper(test_helper)(weights, **cfg)
             return
         cfg.MODEL.update({"TEST_STRATEGY": cfg['TEST_STRATEGY']})
     # 1. Construct model.
@@ -50,6 +50,7 @@ def test_model(cfg, weights, parallel=True):
     # 2. Construct dataset and sampler.
     cfg.DATASET.test.test_mode = True
     dataset = build_dataset((cfg.DATASET.test, cfg.PIPELINE.test))
+    cfg.dataset = dataset
     batch_size = cfg.DATASET.get("test_batch_size", 8)
     places = paddle.set_device('gpu')
     # default num worker: 0, which means no subprocess will be created

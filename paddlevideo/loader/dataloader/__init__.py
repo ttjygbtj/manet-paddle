@@ -11,6 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .dataloader_manet import Stage2_DataLoader
 
-__all__ = ['Stage2_DataLoader']
+__all__ = []
