@@ -12,7 +12,7 @@ __all__ = ["DistributedShortSampler"]
 class DistributedShortSampler(BatchSampler):
     """Sampler that restricts data loading to a subset of the dataset.
     In such case, each process can pass a DistributedBatchSampler instance
-    as a DataLoader sampler, and load a subset of the original dataset that
+    as a DataLoader batch_sampler, and load a subset of the original dataset that
     is exclusive to it.
     .. note::
         Batch size is dynamic changed following short cycle schedule.
@@ -118,7 +118,7 @@ class DistributedShortSampler(BatchSampler):
         for idx in _sample_iter:
             batch_indices.append(
                 (idx, counter %
-                 self.len_batch_sizes))  #to be used in sampler get_item
+                 self.len_batch_sizes))  #to be used in batch_sampler get_item
             if len(batch_indices) == batch_size:
                 yield batch_indices
                 counter += 1
@@ -139,7 +139,7 @@ class DistributedShortSampler(BatchSampler):
         Sets the epoch number. When :attr:`shuffle=True`, this number is used
         as seeds of random numbers. By default, users may not set this, all
         replicas (workers) use a different random ordering for each epoch.
-        If set same number at each epoch, this sampler will yield the same
+        If set same number at each epoch, this batch_sampler will yield the same
         ordering at all epoches.
         Arguments:
             epoch (int): Epoch number.

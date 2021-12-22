@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 import numpy as np
 from .base import BaseSampler
-from ..registry import SAMPLERS
+from paddlevideo.loader.registry import SAMPLERS
 
 
 @SAMPLERS.register()
@@ -18,10 +18,10 @@ class RandomIdentitySampler(BaseSampler):
         num_instances (int): number of instances per identity.
     """
     def __init__(self, dataset, num_instances=1):
-        self.sample_list = dataset.info
+        super(RandomIdentitySampler, self).__init__(data_source=dataset.info)
         self.num_instances = num_instances
         self.index_dic = defaultdict(list)
-        for index, tmp_dic in enumerate(self.sample_list):
+        for index, tmp_dic in enumerate(self.data_source):
             pid = tmp_dic['seq_name']
             self.index_dic[pid].append(index)
         self.pids = list(self.index_dic.keys())

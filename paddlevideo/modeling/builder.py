@@ -33,7 +33,7 @@ def build_assigner(cfg, **default_args):
 
 
 def build_sampler(cfg, **default_args):
-    """Builder of box sampler."""
+    """Builder of box batch_sampler."""
     return build(cfg, BBOX_SAMPLERS)
 
 
@@ -48,7 +48,7 @@ def build_assigner(cfg, **default_args):
 
 
 def build_sampler(cfg, **default_args):
-    """Builder of box sampler."""
+    """Builder of box batch_sampler."""
     return build(cfg, BBOX_SAMPLERS)
 
 

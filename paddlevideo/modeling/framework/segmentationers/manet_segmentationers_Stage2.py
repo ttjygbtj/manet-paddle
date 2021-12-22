@@ -115,7 +115,7 @@ class Manet_stage2_train_helper(object):
 
         if use_fleet:
             model = paddle.distributed_model(model)
-        # 2. Construct dataset and batch_sampler
+        # 2. Construct dataset and sampler
         train_dataset = build_dataset(
             (cfg['DATASET']['train'], cfg['PIPELINE']['train']))
         max_itr = cfg['TRAIN_STRATEGY']['train_total_steps']
@@ -186,23 +186,22 @@ class Manet_stage2_train_helper(object):
                                                 num_workers=num_workers,
                                                 collate_fn_cfg=cfg.get(
                                                     'MIX', None),
-                                                places=places,
-                                                return_list=False)
+                                                places=places)
                 if cfg.get('DATALOADER') and cfg.get('DATALOADER').get(
                         'train') and cfg.get('DATALOADER').get('train').get(
-                            'batch_sampler'):
-                    sampler = cfg['DATALOADER']['train']['batch_sampler']
+                            'sampler'):
+                    sampler = cfg['DATALOADER']['train']['sampler']
                     sampler['dataset'] = train_dataset
                     sampler = build_sampler(sampler)
-                    cfg['DATALOADER']['train'].pop('batch_sampler')
-                    train_dataloader_setting['batch_sampler'] = sampler
+                    cfg['DATALOADER']['train'].pop('sampler')
+                    train_dataloader_setting['sampler'] = sampler
                 train_dataloader_setting.update({'dataset': train_dataset})
                 train_loader = None
                 if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train'):
                     train_dataloader_setting.update(cfg['DATALOADER']['train'])
-                    if cfg['DATALOADER']['train'].get('name'):
+                    if cfg['DATALOADER']['train'].get('dataloader'):
                         train_loader = build_custom_dataloader(
-                            **train_dataloader_setting)
+                            train_dataloader_setting)
                 if not train_loader:
                     train_loader = build_dataloader(**train_dataloader_setting)
                 print('round:{} start'.format(r))
@@ -444,14 +443,12 @@ class Manet_stage2_train_helper(object):
                             if cfg.get('DATALOADER') and cfg.get(
                                     'DATALOADER').get('valid') and cfg.get(
                                         'DATALOADER').get('valid').get(
-                                            'batch_sampler'):
-                                sampler = cfg['DATALOADER']['valid'][
-                                    'batch_sampler']
+                                            'sampler'):
+                                sampler = cfg['DATALOADER']['valid']['sampler']
                                 sampler['dataset'] = valid_dataset
                                 sampler = build_sampler(sampler)
-                                cfg['DATALOADER']['valid'].pop('batch_sampler')
-                                valid_dataloader_setting[
-                                    'batch_sampler'] = sampler
+                                cfg['DATALOADER']['valid'].pop('sampler')
+                                valid_dataloader_setting['sampler'] = sampler
                             valid_dataloader_setting.update(
                                 {'dataset': valid_dataset})
                             valid_loader = None
@@ -459,9 +456,9 @@ class Manet_stage2_train_helper(object):
                                     'DATALOADER').get('valid'):
                                 valid_dataloader_setting.update(
                                     cfg['DATALOADER']['valid'])
-                                if cfg['DATALOADER']['valid'].get('name'):
+                                if cfg['DATALOADER']['valid'].get('dataloader'):
                                     valid_loader = build_custom_dataloader(
-                                        **valid_dataloader_setting)
+                                        valid_dataloader_setting)
                             if not valid_loader:
                                 valid_loader = build_dataloader(
                                     **valid_dataloader_setting)
@@ -587,13 +584,12 @@ class Manet_stage2_train_helper(object):
                         )
                         if cfg.get('DATALOADER') and cfg.get('DATALOADER').get(
                                 'valid') and cfg.get('DATALOADER').get(
-                                    'valid').get('batch_sampler'):
-                            sampler = cfg['DATALOADER']['valid'][
-                                'batch_sampler']
+                                    'valid').get('sampler'):
+                            sampler = cfg['DATALOADER']['valid']['sampler']
                             sampler['dataset'] = valid_dataset
                             sampler = build_sampler(sampler)
-                            cfg['DATALOADER']['valid'].pop('batch_sampler')
-                            valid_dataloader_setting['batch_sampler'] = sampler
+                            cfg['DATALOADER']['valid'].pop('sampler')
+                            valid_dataloader_setting['sampler'] = sampler
                         valid_dataloader_setting.update(
                             {'dataset': valid_dataset})
                         valid_loader = None
@@ -601,9 +597,9 @@ class Manet_stage2_train_helper(object):
                                 'valid'):
                             valid_dataloader_setting.update(
                                 cfg['DATALOADER']['valid'])
-                            if cfg['DATALOADER']['valid'].get('name'):
+                            if cfg['DATALOADER']['valid'].get('dataloader'):
                                 valid_loader = build_custom_dataloader(
-                                    **valid_dataloader_setting)
+                                    valid_dataloader_setting)
                         if not valid_loader:
                             valid_loader = build_dataloader(
                                 **valid_dataloader_setting)
@@ -666,7 +662,7 @@ class Manet_test_helper(object):
         if parallel:
             model = paddle.DataParallel(model)
 
-        # 2. Construct dataset and batch_sampler.
+        # 2. Construct dataset and sampler.
         cfg['DATASET'].test.test_mode = True
         total_frame_num_dic = {}
         #################
@@ -813,15 +809,13 @@ class Manet_test_helper(object):
                                 if cfg.get('DATALOADER') and cfg.get(
                                         'DATALOADER').get('test') and cfg.get(
                                             'DATALOADER').get('test').get(
-                                                'batch_sampler'):
+                                                'sampler'):
                                     sampler = cfg['DATALOADER']['test'][
-                                        'batch_sampler']
+                                        'sampler']
                                     sampler['dataset'] = test_dataset
                                     sampler = build_sampler(sampler)
-                                    cfg['DATALOADER']['test'].pop(
-                                        'batch_sampler')
-                                    test_dataloader_setting[
-                                        'batch_sampler'] = sampler
+                                    cfg['DATALOADER']['test'].pop('sampler')
+                                    test_dataloader_setting['sampler'] = sampler
                                 test_dataloader_setting.update(
                                     {'dataset': test_dataset})
                                 test_loader = None
@@ -829,9 +823,10 @@ class Manet_test_helper(object):
                                         'DATALOADER').get('test'):
                                     test_dataloader_setting.update(
                                         cfg['DATALOADER']['test'])
-                                    if cfg['DATALOADER']['test'].get('name'):
+                                    if cfg['DATALOADER']['test'].get(
+                                            'dataloader'):
                                         test_loader = build_custom_dataloader(
-                                            **test_dataloader_setting)
+                                            test_dataloader_setting)
                                 if not test_loader:
                                     test_loader = build_dataloader(
                                         **test_dataloader_setting)

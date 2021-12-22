@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .builder import build_dataset, build_dataloader, build_batch_pipeline, build_custom_dataloader \
-    , build_sampler
+from .builder import build_dataset, build_dataloader, build_batch_pipeline, build_custom_dataloader
 from .dataloader import *
 from .sampler import *
 from .dataset import VideoDataset
@@ -27,5 +26,4 @@ __all__ = [
     'TSN_Dali_loader',
     'get_input_data',
     'build_custom_dataloader',
-    'build_sampler',
 ]

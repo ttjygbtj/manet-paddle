@@ -56,23 +56,27 @@ def test_model(cfg, weights, parallel=True):
     # default num worker: 0, which means no subprocess will be created
     num_workers = cfg.DATASET.get('num_workers', 0)
     num_workers = cfg.DATASET.get('test_num_workers', num_workers)
-    if cfg.get('DATALOADER').get('test'):
-        if cfg.get('DATALOADER').get('test').get('name'):
-            cfg_copy = cfg.DATALOADER.test.copy()
-            cfg_copy['dataset'] = dataset
-            data_loader = build_custom_dataloader(cfg_copy)
-        else:
-            dataloader_setting = cfg.get('DATALOADER').get('test')
-            data_loader = build_dataloader(dataset, **dataloader_setting)
-    else:
-        dataloader_setting = dict(batch_size=batch_size,
-                                  num_workers=num_workers,
-                                  places=places,
-                                  drop_last=False,
-                                  sampler=cfg.DATASET.get('sampler', None),
-                                  shuffle=False)
+    dataloader_setting = dict(batch_size=batch_size,
+                              num_workers=num_workers,
+                              places=places,
+                              drop_last=False,
+                              shuffle=False)
 
-        data_loader = build_dataloader(dataset, **dataloader_setting)
+    if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('test') and cfg.get(
+            'DATALOADER').get('test').get('sampler'):
+        sampler = cfg['DATALOADER']['test']['sampler']
+        sampler['dataset'] = dataset
+        sampler = build_sampler(sampler)
+        cfg['DATALOADER']['test'].pop('sampler')
+        dataloader_setting['sampler'] = sampler
+    dataloader_setting.update({'dataset': dataset})
+    data_loader = None
+    if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('test'):
+        dataloader_setting.update(cfg['DATALOADER']['test'])
+        if cfg['DATALOADER']['test'].get('name'):
+            data_loader = build_custom_dataloader(**dataloader_setting)
+    if not data_loader:
+        data_loader = build_dataloader(**dataloader_setting)
     model.eval()
 
     state_dicts = load(weights)

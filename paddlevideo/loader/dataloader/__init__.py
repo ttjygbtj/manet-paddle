@@ -12,4 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = []
+from paddlevideo.loader.dataloader.manet_dataloader import ManetDataLoaderStage2
+
+__all__ = ['ManetDataLoaderStage2']

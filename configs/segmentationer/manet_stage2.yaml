@@ -75,8 +75,9 @@ PIPELINE: #PIPELINE field
 
 DATALOADER:
   train:
-#    batch_sampler:
-#      name: RandomIdentitySampler
+    dataloader: ManetDataLoaderStage2
+    sampler:
+      name: RandomIdentitySampler
 
 OPTIMIZER: #OPTIMIZER field
   name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'

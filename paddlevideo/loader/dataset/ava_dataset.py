@@ -211,7 +211,7 @@ class AVADataset(BaseDataset):
 
         #ret = self.pipeline(results, "")
         ret = self.pipeline(results)
-        #padding for sampler
+        #padding for batch_sampler
         len_proposals = ret['proposals'].shape[0]
         len_gt_bboxes = ret['gt_bboxes'].shape[0]
         len_gt_labels = ret['gt_labels'].shape[0]

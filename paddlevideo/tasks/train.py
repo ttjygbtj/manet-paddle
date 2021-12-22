@@ -130,12 +130,12 @@ def train_model(cfg,
                                     collate_fn_cfg=cfg.get('MIX', None),
                                     places=places)
     if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train') and cfg.get(
-            'DATALOADER').get('train').get('batch_sampler'):
-        sampler = cfg['DATALOADER']['train']['batch_sampler']
+            'DATALOADER').get('train').get('sampler'):
+        sampler = cfg['DATALOADER']['train']['sampler']
         sampler['dataset'] = train_dataset
         sampler = build_sampler(sampler)
-        cfg['DATALOADER']['train'].pop('batch_sampler')
-        train_dataloader_setting['batch_sampler'] = sampler
+        cfg['DATALOADER']['train'].pop('sampler')
+        train_dataloader_setting['sampler'] = sampler
     train_dataloader_setting.update({'dataset': train_dataset})
     train_loader = None
     if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train'):

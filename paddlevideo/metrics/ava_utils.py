@@ -358,7 +358,8 @@ def collect_results_cpu(result_part, size):
     ordered_results = []
     for res in zip(*part_list):
         ordered_results.extend(list(res))
-    ordered_results = ordered_results[:size]  #the sampler may pad some samples
+    ordered_results = ordered_results[:
+                                      size]  #the batch_sampler may pad some samples
     #5. remove results of all parts from tmp dir, avoid dump_file fail to tmp dir when dir not exists.
     for i in range(world_size):
         part_file = osp.join(tmpdir, f'part_{i}.pkl')

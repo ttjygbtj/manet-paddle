@@ -417,8 +417,8 @@ class JitterScale(object):
     """
     Scale image, while the target short size is randomly select between min_size and max_size.
     Args:
-        min_size: Lower bound for random sampler.
-        max_size: Higher bound for random sampler.
+        min_size: Lower bound for random batch_sampler.
+        max_size: Higher bound for random batch_sampler.
     """
     def __init__(self,
                  min_size,

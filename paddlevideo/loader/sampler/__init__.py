@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from paddlevideo.loader.sampler.sampler_manet import RandomIdentitySampler
+from paddlevideo.loader.sampler.manet_sampler import RandomIdentitySampler
 
 __all__ = ['RandomIdentitySampler']
