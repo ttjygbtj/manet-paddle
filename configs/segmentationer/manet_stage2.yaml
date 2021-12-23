@@ -20,16 +20,16 @@ MODEL: #MODEL field
     model_useintseg: False
     test_mode: False
     model_max_local_distance: 12
-TRAIN_STRATEGY: #train_strategy
-  train_helper: 'Manet_stage2_train_helper'
+TRAIN: #TRAIN
+  name: 'Manet_stage2_train_helper'
   knns: 1
   damage_initial_previous_frame_mask: True
   train_total_steps: 101000
   max_iters: 80001
-TEST_STRATEGY:
-  test_helper: 'Manet_test_helper'
+TEST:
+  name: 'Manet_test_helper'
   knns: 1
-VALID_STRATEGY:
+VALID:
   train_inter_use_true_result: True
 DATASET: #DATASET field
   batch_size: 2 #Mandatory, batch size per gpu.
@@ -37,13 +37,13 @@ DATASET: #DATASET field
   num_workers: 0 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
   valid:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
   test:
     format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandotary, test data index file path.
+    file_path: "/root/datasets/DAVIS" #Mandotary, test data index file path.
 
 
 PIPELINE: #PIPELINE field
@@ -97,6 +97,9 @@ OPTIMIZER: #OPTIMIZER field
 
 METRIC:
   name: 'CenterCropMetric'
+INFERENCE:
+    name: 'Manet_Inference_helper'
+    output_path: inference_results
 
 model_name: "Manet_stage2" #Mandatory, model name.
 log_interval: 50 #Optional, the interval of logger.

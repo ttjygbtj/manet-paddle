@@ -67,7 +67,7 @@ class Manet_stage2_train_helper(object):
                  use_fleet=False,
                  profiler_options=None,
                  **cfg):
-        max_iters = cfg['TRAIN_STRATEGY'].get('max_iters', 80001)
+        max_iters = cfg['TRAIN'].get('max_iters', 80001)
         logger = get_logger("paddlevideo")
         batch_size = cfg['DATASET'].get('batch_size', 8)
         valid_batch_size = cfg['DATASET'].get('valid_batch_size', batch_size)
@@ -118,7 +118,7 @@ class Manet_stage2_train_helper(object):
         # 2. Construct dataset and sampler
         train_dataset = build_dataset(
             (cfg['DATASET']['train'], cfg['PIPELINE']['train']))
-        max_itr = cfg['TRAIN_STRATEGY']['train_total_steps']
+        max_itr = cfg['TRAIN']['train_total_steps']
         step = 0
         round_ = 3
         epoch_per_round = 30
@@ -163,7 +163,7 @@ class Manet_stage2_train_helper(object):
                                            incr_every_n_steps=2000,
                                            decr_every_n_nan_or_inf=1)
         best = 0.
-        while step < cfg['TRAIN_STRATEGY']['train_total_steps']:
+        while step < cfg['TRAIN']['train_total_steps']:
             if step < resume_epoch:
                 logger.info(
                     f"| step: [{step + 1}] <= resume_epoch: [{resume_epoch}], continue... "
@@ -244,8 +244,7 @@ class Manet_stage2_train_helper(object):
                                         global_map_tmp_dic={},
                                         seq_names=seq_names,
                                         gt_ids=obj_nums,
-                                        k_nearest_neighbors=cfg[
-                                            'TRAIN_STRATEGY'].knns,
+                                        k_nearest_neighbors=cfg['TRAIN'].knns,
                                         frame_num=ref_frame_nums,
                                         first_inter=first_inter)
                             else:
@@ -262,8 +261,8 @@ class Manet_stage2_train_helper(object):
                                             global_map_tmp_dic={},
                                             seq_names=seq_names,
                                             gt_ids=obj_nums,
-                                            k_nearest_neighbors=cfg[
-                                                'TRAIN_STRATEGY'].knns,
+                                            k_nearest_neighbors=cfg['TRAIN'].
+                                            knns,
                                             frame_num=ref_frame_nums,
                                             first_inter=first_inter)
                                 else:
@@ -276,8 +275,7 @@ class Manet_stage2_train_helper(object):
                                         global_map_tmp_dic={},
                                         seq_names=seq_names,
                                         gt_ids=obj_nums,
-                                        k_nearest_neighbors=cfg[
-                                            'TRAIN_STRATEGY'].knns,
+                                        k_nearest_neighbors=cfg['TRAIN'].knns,
                                         frame_num=ref_frame_nums,
                                         first_inter=first_inter)
                         else:
@@ -295,8 +293,7 @@ class Manet_stage2_train_helper(object):
                                         global_map_tmp_dic={},
                                         seq_names=seq_names,
                                         gt_ids=obj_nums,
-                                        k_nearest_neighbors=cfg[
-                                            'TRAIN_STRATEGY'].knns,
+                                        k_nearest_neighbors=cfg['TRAIN'].knns,
                                         frame_num=ref_frame_nums,
                                         first_inter=first_inter)
                             else:
@@ -308,8 +305,7 @@ class Manet_stage2_train_helper(object):
                                     global_map_tmp_dic={},
                                     seq_names=seq_names,
                                     gt_ids=obj_nums,
-                                    k_nearest_neighbors=cfg['TRAIN_STRATEGY'].
-                                    knns,
+                                    k_nearest_neighbors=cfg['TRAIN'].knns,
                                     frame_num=ref_frame_nums,
                                     first_inter=first_inter)
                         label_and_obj_dic = {}
@@ -380,8 +376,8 @@ class Manet_stage2_train_helper(object):
                             if i % cfg.get("log_interval", 10) == 0:
                                 ips = "ips: {:.5f} instance/sec.".format(
                                     batch_size / record_list["batch_time"].val)
-                                log_batch(record_list, i, epoch + 1, cfg.epochs,
-                                          "train", ips)
+                                log_batch(record_list, i, epoch + 1,
+                                          cfg['epochs'], "train", ips)
 
                             # learning rate iter step
                             if cfg['OPTIMIZER'].learning_rate.get("iter_step"):
@@ -398,7 +394,7 @@ class Manet_stage2_train_helper(object):
 
                 # 6. Save model and optimizer
                 if epoch % cfg.get("save_interval",
-                                   1) == 0 or epoch == cfg.epochs - 1:
+                                   1) == 0 or epoch == cfg['epochs'] - 1:
                     save(
                         optimizer.state_dict(),
                         osp.join(output_dir,
@@ -478,7 +474,7 @@ class Manet_stage2_train_helper(object):
                                 inputs = paddle.concat((ref_imgs, img1s, img2s),
                                                        0)
                                 if r == 0:
-                                    ref_scribble_labels = self.rough_ROI(
+                                    ref_scribble_labels = rough_ROI(
                                         ref_scribble_labels)
                                 print(seq_names[0])
                                 label1s_tocat = None
@@ -505,8 +501,8 @@ class Manet_stage2_train_helper(object):
                                             label1s,
                                             seq_names=seq_names,
                                             gt_ids=obj_nums,
-                                            k_nearest_neighbors=cfg[
-                                                'TRAIN_STRATEGY'].knns,
+                                            k_nearest_neighbors=cfg['TRAIN'].
+                                            knns,
                                             global_map_tmp_dic=
                                             global_map_tmp_dic,
                                             frame_num=frame_nums)
@@ -517,8 +513,7 @@ class Manet_stage2_train_helper(object):
                                         label1s,
                                         seq_names=seq_names,
                                         gt_ids=obj_nums,
-                                        k_nearest_neighbors=cfg[
-                                            'TRAIN_STRATEGY'].knns,
+                                        k_nearest_neighbors=cfg['TRAIN'].knns,
                                         global_map_tmp_dic=global_map_tmp_dic,
                                         frame_num=frame_nums)
                                 pred_label = tmp_dic[
@@ -543,7 +538,7 @@ class Manet_stage2_train_helper(object):
                                 frame_num_dic[seq_names[0]] = frame_nums[0]
                                 pred_label = pred_label.unsqueeze(0)
                                 img_ww = Image.open(
-                                    os.path.join(cfg.DATA_ROOT,
+                                    os.path.join(cfg['DATASET'],
                                                  'JPEGImages/480p/',
                                                  seq_names[0], '00000.jpg'))
                                 img_ww = np.array(img_ww)
@@ -755,7 +750,8 @@ class Manet_test_helper(object):
                         only_last=True)
                     print(sequence)
                     h, w = h_w_dic[sequence]
-                    prev_label_storage = paddle.zeros([104, h, w])
+                    if 'prev_label_storage' not in locals().keys():
+                        prev_label_storage = paddle.zeros([104, h, w])
                     if len(annotated_frames(scribbles)) == 0:
                         final_masks = prev_label_storage[:seq_imgnum_dict_[
                             sequence]]
@@ -987,8 +983,8 @@ class Manet_test_helper(object):
                                             use_local_map=True,
                                             seq_names=[sequence],
                                             gt_ids=paddle.to_tensor([obj_nums]),
-                                            k_nearest_neighbors=cfg[
-                                                'TEST_STRATEGY']['knns'],
+                                            k_nearest_neighbors=cfg['TEST']
+                                            ['knns'],
                                             global_map_tmp_dic=
                                             eval_global_map_tmp_dic,
                                             local_map_dics=local_map_dics,
@@ -1010,8 +1006,7 @@ class Manet_test_helper(object):
                                         use_local_map=True,
                                         seq_names=[sequence],
                                         gt_ids=paddle.to_tensor([obj_nums]),
-                                        k_nearest_neighbors=cfg['TEST_STRATEGY']
-                                        ['knns'],
+                                        k_nearest_neighbors=cfg['TEST']['knns'],
                                         global_map_tmp_dic=
                                         eval_global_map_tmp_dic,
                                         local_map_dics=local_map_dics,
@@ -1070,8 +1065,7 @@ class Manet_test_helper(object):
                                         use_local_map=True,
                                         seq_names=[sequence],
                                         gt_ids=paddle.to_tensor([obj_nums]),
-                                        k_nearest_neighbors=cfg['TEST_STRATEGY']
-                                        ['knns'],
+                                        k_nearest_neighbors=cfg['TEST']['knns'],
                                         global_map_tmp_dic=
                                         eval_global_map_tmp_dic,
                                         local_map_dics=local_map_dics,
@@ -1091,8 +1085,7 @@ class Manet_test_helper(object):
                                     use_local_map=True,
                                     seq_names=[sequence],
                                     gt_ids=paddle.to_tensor([obj_nums]),
-                                    k_nearest_neighbors=cfg['TEST_STRATEGY']
-                                    ['knns'],
+                                    k_nearest_neighbors=cfg['TEST']['knns'],
                                     global_map_tmp_dic=eval_global_map_tmp_dic,
                                     local_map_dics=local_map_dics,
                                     interaction_num=n_interaction,

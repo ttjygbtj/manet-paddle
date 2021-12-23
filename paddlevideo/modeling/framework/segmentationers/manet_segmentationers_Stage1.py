@@ -60,21 +60,20 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
 
         bs, _, h, w = img2s.shape
         inputs = paddle.concat((ref_imgs, img1s, img2s), 0)
-        if self.cfg['TRAIN_STRATEGY']['damage_initial_previous_frame_mask']:
+        if self.cfg['TRAIN']['damage_initial_previous_frame_mask']:
             try:
                 label1s = damage_masks(label1s)
             except:
                 label1s = label1s
                 print('damage_error')
 
-        tmp_dic = self.head(
-            inputs,
-            ref_scribble_labels,
-            label1s,
-            use_local_map=True,
-            seq_names=seq_names,
-            gt_ids=obj_nums,
-            k_nearest_neighbors=self.cfg['TRAIN_STRATEGY']['knns'])
+        tmp_dic = self.head(inputs,
+                            ref_scribble_labels,
+                            label1s,
+                            use_local_map=True,
+                            seq_names=seq_names,
+                            gt_ids=obj_nums,
+                            k_nearest_neighbors=self.cfg['TRAIN']['knns'])
         label_and_obj_dic = {}
         for i, seq_ in enumerate(seq_names):
             label_and_obj_dic[seq_] = (label2s[i], obj_nums[i])
