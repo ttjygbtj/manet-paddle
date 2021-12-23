@@ -33,12 +33,12 @@ def test_model(cfg, weights, parallel=True):
         parallel (bool): Whether to do multi-cards testing. Default: True.
 
     """
-    if cfg.get('TEST_STRATEGY'):
-        if cfg['TEST_STRATEGY'].get('test_helper'):
-            test_helper = {"name": cfg['TEST_STRATEGY']['test_helper']}
+    if cfg.get('TEST'):
+        if cfg['TEST'].get('name'):
+            test_helper = {"name": cfg['TEST']['name']}
             build_test_helper(test_helper)(weights, **cfg)
             return
-        cfg.MODEL.update({"TEST_STRATEGY": cfg['TEST_STRATEGY']})
+        cfg.MODEL.update({"TEST": cfg['TEST']})
     # 1. Construct model.
     if cfg.MODEL.get('backbone') and cfg.MODEL.backbone.get('pretrained'):
         cfg.MODEL.backbone.pretrained = ''  # disable pretrain model init

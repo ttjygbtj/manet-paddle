@@ -60,10 +60,10 @@ def train_model(cfg,
         use_fleet (bool):
         profiler_options (str): Activate the profiler function Default: None.
     """
-    if cfg.get('TRAIN_STRATEGY'):
-        if cfg['TRAIN_STRATEGY'].get('train_helper'):
-            train_helper = {"name": cfg['TRAIN_STRATEGY']['train_helper']}
-            cfg['TRAIN_STRATEGY'].pop('train_helper')
+    if cfg.get('TRAIN'):
+        if cfg['TRAIN'].get('name'):
+            train_helper = {"name": cfg['TRAIN']['name']}
+            cfg['TRAIN'].pop('name')
             build_train_helper(train_helper)(**cfg,
                                              weights=None,
                                              parallel=True,
@@ -73,7 +73,7 @@ def train_model(cfg,
                                              use_fleet=False,
                                              profiler_options=None)
             return
-        cfg.MODEL.update({"TRAIN_STRATEGY": cfg['TRAIN_STRATEGY']})
+        cfg.MODEL.update({"TRAIN": cfg['TRAIN']})
     if use_fleet:
         fleet.init(is_collective=True)
 

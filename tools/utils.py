@@ -711,5 +711,28 @@ class TransNetV2_Inference_helper():
 
 
 @INFERENCE.register()
-class Manet_Inference_helper():
-    pass
+class Manet_Inference_helper(Base_Inference_helper):
+    def __init__(self):
+        super(Manet_Inference_helper, self).__init__()
+
+    def preprocess(self, input_file):
+        """
+        input_file: str, file path
+        return: list
+        """
+        assert os.path.isfile(input_file) is not None, "{0} not exists".format(
+            input_file)
+        results = {'filename': input_file}
+        ops = [FeatureDecoder(num_classes=self.num_classes, has_label=False)]
+        for op in ops:
+            results = op(results)
+
+        res = []
+        for modality in ['rgb', 'audio']:
+            res.append(
+                np.expand_dims(results[f'{modality}_data'], axis=0).copy())
+            res.append(
+                np.expand_dims(results[f'{modality}_len'], axis=0).copy())
+            res.append(
+                np.expand_dims(results[f'{modality}_mask'], axis=0).copy())
+        return res

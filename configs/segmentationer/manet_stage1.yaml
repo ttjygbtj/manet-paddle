@@ -20,7 +20,7 @@ MODEL: #MODEL field
     model_useintseg: False
     test_mode: False
     model_max_local_distance: 12
-TRAIN_STRATEGY: #train_strategy
+TRAIN: #TRAIN
   knns: 1
   damage_initial_previous_frame_mask: True
 DATASET: #DATASET field
