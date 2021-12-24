@@ -31,6 +31,7 @@ DATASET: #DATASET field
     format: "DAVIS2017_VOS_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
     file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
 
+
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
     transform: #Mandotary, image transform operator

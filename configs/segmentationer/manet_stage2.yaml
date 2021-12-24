@@ -45,7 +45,6 @@ DATASET: #DATASET field
     format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
     file_path: "/root/datasets/DAVIS" #Mandotary, test data index file path.
 
-
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
     transform: #Mandotary, image transform operator
