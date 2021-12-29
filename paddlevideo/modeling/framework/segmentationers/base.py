@@ -37,7 +37,11 @@ class BaseSegmentationer(nn.Layer):
             self.backbone = None
         if head != None:
             self.head_name = head.name
-            self.head = builder.build_head(head)
+            try:
+                self.head = builder.build_head(head)
+            except:
+                head.update({'feature_extracter': self.backbone})
+                self.head = builder.build_head(head)
             if hasattr(self.head, 'init_weights'):
                 self.head.init_weights()
         else:

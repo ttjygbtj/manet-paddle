@@ -114,7 +114,6 @@ class ResNet(nn.Layer):
                                          stride=strides[3],
                                          dilation=dilations[3],
                                          BatchNorm=BatchNorm)
-        self.pretrained = pretrained
         self.init_weight()
 
 
@@ -202,11 +201,6 @@ class ResNet(nn.Layer):
         return x, low_level_feat
 
     def init_weight(self):
-        if isinstance(self.pretrained, str) and self.pretrained.strip() != "":
-            self._load_pretrained_model(self.pretrained)
-        else:
-            self._init_weight()
-    def _init_weight(self):
         for m in self.sublayers():
             if isinstance(m, nn.Conv2D):
                 n = m._kernel_size[0] * m._kernel_size[1] * m._out_channels
@@ -216,24 +210,7 @@ class ResNet(nn.Layer):
                 zero_(m.bias)
         return self.sublayers()
 
-    def _load_pretrained_model(self, pretrained):
-        try:
-            pretrain_dict = paddle.load(pretrained)['state_dict']
-        except:
-            pretrain_dict = paddle.load(pretrained)
-        model_dict = {}
-        state_dict = self.state_dict()
-        for k, v in pretrain_dict.items():
-            if 'num_batches_tracked' not in k:
-                if k in state_dict:
-                    model_dict[k] = v
-                else:
-                    print(f'pretrained -----{k} -------is not in model')
-        write_dict(pretrain_dict, 'init_for_align.txt')
-        write_dict(state_dict, 'model.txt')
-        state_dict.update(model_dict)
-        self.set_state_dict(state_dict)
-        print('loaded pretrained model')
+
 
 
 def ResNet101(output_stride, BatchNorm, pretrained=None):

@@ -64,6 +64,7 @@ def train_model(cfg,
         if cfg['TRAIN'].get('name'):
             train_helper = {"name": cfg['TRAIN']['name']}
             cfg['TRAIN'].pop('name')
+            train_helper.update(cfg)
             build_train_helper(train_helper)(**cfg,
                                              weights=None,
                                              parallel=True,

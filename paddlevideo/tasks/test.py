@@ -36,6 +36,7 @@ def test_model(cfg, weights, parallel=True):
     if cfg.get('TEST'):
         if cfg['TEST'].get('name'):
             test_helper = {"name": cfg['TEST']['name']}
+            test_helper.update(cfg)
             build_test_helper(test_helper)(weights, **cfg)
             return
         cfg.MODEL.update({"TEST": cfg['TEST']})

@@ -50,6 +50,7 @@ class DeepLab(nn.Layer):
         self.aspp = build_aspp(backbone, output_stride, BatchNorm)
         self.decoder = build_decoder(num_classes, backbone, BatchNorm)
 
+
     def forward(self, input):
         x, low_level_feat = self.backbone(input)
         x = self.aspp(x)

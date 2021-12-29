@@ -6,7 +6,7 @@ import sys
 
 import time
 import paddle.nn.functional as F
-from paddlevideo.utils.manet_utils import int_, float_, long_
+from paddlevideo.utils.manet_utils import int_, float_, long_, write_dict
 from paddlevideo.utils.manet_utils import kaiming_normal_
 
 #############################################################GLOBAL_DIST_MAP
@@ -526,8 +526,29 @@ class IntVOS(BaseHead):
                 in_dim=cfg['model_semantic_embedding_dim'] + 2,
                 embed_dim=cfg['model_head_embedding_dim'],
                 **cfg)  # interaction segm head
+        self.pretrained = cfg.get('pretrained', None)
         self.cfg = cfg
-
+    def init_weights(self):
+        if isinstance(self.pretrained, str) and self.pretrained.strip() != "":
+            self._load_pretrained_model(self.pretrained)
+    def _load_pretrained_model(self, pretrained):
+            try:
+                pretrain_dict = paddle.load(pretrained)['state_dict']
+            except:
+                pretrain_dict = paddle.load(pretrained)
+            model_dict = {}
+            state_dict = self.state_dict()
+            for k, v in pretrain_dict.items():
+                if 'num_batches_tracked' not in k:
+                    if k in state_dict:
+                        model_dict[k] = v
+                    else:
+                        print(f'pretrained -----{k} -------is not in model')
+            write_dict(pretrain_dict, 'init_for_align.txt')
+            write_dict(state_dict, 'model.txt')
+            state_dict.update(model_dict)
+            self.set_state_dict(state_dict)
+            print('loaded pretrained model')
     def loss(self, **kwargs):
         return self.loss_func(**kwargs)
 

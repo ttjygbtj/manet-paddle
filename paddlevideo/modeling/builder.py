@@ -59,7 +59,6 @@ def build_head(cfg):
 
 def build_loss(cfg):
     """Build loss."""
-    print(build(cfg, LOSSES))
     return build(cfg, LOSSES)
 
 
@@ -73,7 +72,7 @@ def build_localizer(cfg):
     return build(cfg, LOCALIZERS, key='framework')
 
 
-def build_segmentationer(cfg, train_cfg=None, test_cfg=None):
+def build_segmentationer(cfg):
     """Build detector."""
     return build(cfg, SEGMENTATIONERS, key='framework')
 
@@ -93,9 +92,9 @@ def build_detector(cfg):
     return build(cfg, DETECTORS, key='framework')
 
 
-def build_model(cfg):
+def build_model(cfg, key='framework'):
     cfg_copy = cfg.copy()
-    framework_type = cfg_copy.get('framework')
+    framework_type = cfg_copy.get(key)
     if framework_type in RECOGNIZERS:
         return build_recognizer(cfg)
     elif framework_type in LOCALIZERS:

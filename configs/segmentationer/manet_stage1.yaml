@@ -2,13 +2,13 @@ MODEL: #MODEL field
   framework: "ManetSegmentationer_Stage1"
   backbone:
     name: "DeepLab"
-    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
     backbone: 'resnet'
     output_stride: 16
     num_classes: 21
     freeze_bn: False
   head:
     name: "IntVOS"
+    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
@@ -59,7 +59,7 @@ OPTIMIZER: #OPTIMIZER field
     learning_rate: 0.0007
     lr_lambda: "lambda last_step: (1 - last_step / (101000 + 1)) ** 0.9"
   weight_decay:
-    name: 'L1'
+    name: 'L2'
     value: 0.00004
   grad_clip:
     name: 'ClipGradByGlobalNorm'

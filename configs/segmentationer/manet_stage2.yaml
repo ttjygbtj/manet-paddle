@@ -6,9 +6,9 @@ MODEL: #MODEL field
     output_stride: 16
     num_classes: 21
     freeze_bn: False
-    pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
   head:
     name: "IntVOS"
+    pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
@@ -29,6 +29,7 @@ TRAIN: #TRAIN
 TEST:
   name: 'Manet_test_helper'
   knns: 1
+  is_save_image: True
 VALID:
   train_inter_use_true_result: True
 DATASET: #DATASET field
@@ -37,13 +38,13 @@ DATASET: #DATASET field
   num_workers: 0 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
+    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
   valid:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
+    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
   test:
     format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
-    file_path: "/root/datasets/DAVIS" #Mandotary, test data index file path.
+    file_path: "/home/lc/manet/data/DAVIS" #Mandotary, test data index file path.
 
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
@@ -88,7 +89,7 @@ OPTIMIZER: #OPTIMIZER field
     learning_rate: 0.0007
     lr_lambda: "lambda last_step: (1 - last_step / (101000 + 1)) ** 0.9"
   weight_decay:
-    name: 'L1'
+    name: 'L2'
     value: 0.00004
   grad_clip:
     name: 'ClipGradByGlobalNorm'

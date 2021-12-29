@@ -39,10 +39,9 @@ from .base import BaseSegmentationer
 @SEGMENTATIONERS.register()
 class ManetSegmentationer_Stage1(BaseSegmentationer):
     def __init__(self, backbone=None, head=None, **cfg):
-        super().__init__(backbone, **cfg)
-        head_copy = head.copy()
-        head_copy.update({'feature_extracter': self.backbone})
-        self.head = builder.build_head(head_copy)
+        super().__init__(backbone, head, **cfg)
+
+
 
     def train_step(self, data_batch, step, **cfg):
         """Define how the model is going to train, from input to output.
