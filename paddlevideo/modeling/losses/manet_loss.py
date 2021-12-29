@@ -21,7 +21,7 @@ class Added_BCEWithLogitsLoss(BaseWeightedLoss):
             self.bceloss = nn.BCEWithLogitsLoss(reduction='none')
 
     def forward(self, dic_tmp, label_tmp, step, obj_ids, seq_):
-
+        print('hhhhhhhhhhhhhhh')
         final_loss = 0
         for seq_name in dic_tmp.keys():
             label_ = label_tmp[seq_name].transpose([1, 2, 0])
