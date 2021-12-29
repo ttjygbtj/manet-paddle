@@ -89,6 +89,8 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
             obj_ids = np.arange(1, obj_num + 1)
             obj_ids = paddle.to_tensor(obj_ids)
             obj_ids = int_(obj_ids)
+
+        print(self.head.loss)
         loss_metrics = {
             'loss':
             self.head.loss(tmp_dic, label_tmp, step, obj_ids=obj_ids, seq_=seq_) / bs
