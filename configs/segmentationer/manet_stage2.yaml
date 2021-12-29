@@ -8,7 +8,7 @@ MODEL: #MODEL field
   head:
     name: "IntVOS"
 #    pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
-        pretrained: "/root/codespace/manet/save_step_80000.pdparams/save_step_80000.pdparams"
+        pretrained: "/root/codespace/manet_paddle/save_step_80000.pdparams/save_step_80000.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
