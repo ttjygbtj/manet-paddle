@@ -7,8 +7,8 @@ MODEL: #MODEL field
     freeze_bn: False
   head:
     name: "IntVOS"
-    pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
-#    pretrained: "/root/codespace/manet/save_step_80000.pdparams/save_step_80000.pdparams"
+#    pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
+        pretrained: "/root/codespace/manet/save_step_80000.pdparams/save_step_80000.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
@@ -36,24 +36,24 @@ DATASET: #DATASET field
   batch_size: 2 #Mandatory, batch size per gpu.
   test_batch_size: 2 #Optional, test batch size per gpu.
   num_workers: 0 #Mandatory, the number of subprocess on each GPU.
+  #  train:
+  #    format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
+  #    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+  #  valid:
+  #    format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
+  #    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+  #  test:
+  #    format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
+  #    file_path: "/home/lc/manet/data/DAVIS" #Mandotary, test data index file path.
   train:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
   valid:
     format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
   test:
     format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandotary, test data index file path.
-#  train:
-#    format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-#    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
-#  valid:
-#    format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-#    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
-#  test:
-#    format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
-#    file_path: "/root/datasets/DAVIS" #Mandotary, test data index file path.
+    file_path: "/root/datasets/DAVIS" #Mandotary, test data index file path.
 
 
 PIPELINE: #PIPELINE field
@@ -93,7 +93,7 @@ OPTIMIZER: #OPTIMIZER field
   name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'
   momentum: 0.9
   parameter_list:
-    - head: [inter_seghead]
+    - head: [ inter_seghead ]
   learning_rate: #Mandatory, the type of learning rate scheduler, associate to the 'paddlevideo/solver/'
     name: 'LambdaDecay'
     learning_rate: 0.0007
@@ -108,8 +108,8 @@ OPTIMIZER: #OPTIMIZER field
 METRIC:
   name: 'CenterCropMetric'
 INFERENCE:
-    name: 'Manet_Inference_helper'
-    output_path: inference_results
+  name: 'Manet_Inference_helper'
+  output_path: inference_results
 
 model_name: "Manet_stage2" #Mandatory, model name.
 epochs: 6000 #int(200000 * DATASET.batch_size / 60.) #Mandatory, total epoch

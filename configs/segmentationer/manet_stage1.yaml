@@ -8,8 +8,8 @@ MODEL: #MODEL field
     freeze_bn: False
   head:
     name: "IntVOS"
-    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
-#    pretrained: "/root/codespace/manet/init_for_align.pdparams"
+    #    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
+    pretrained: "/root/codespace/manet/init_for_align.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
@@ -30,8 +30,8 @@ DATASET: #DATASET field
   num_workers: 0 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_VOS_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
-#    file_path: "/root/datasets/DAVIS"
+    #    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+    file_path: "/root/datasets/DAVIS"
 
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
@@ -54,7 +54,7 @@ OPTIMIZER: #OPTIMIZER field
   name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'
   momentum: 0.9
   parameter_list:
-    - head: [feature_extracter, semantic_embedding, dynamic_seghead]
+    - head: [ feature_extracter, semantic_embedding, dynamic_seghead ]
   learning_rate: #Mandatory, the type of learning rate scheduler, associate to the 'paddlevideo/solver/'
     name: 'LambdaDecay'
     learning_rate: 0.0007
