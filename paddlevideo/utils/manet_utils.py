@@ -157,7 +157,7 @@ def write_dict(state_dict, name, **cfg):
         lines.append(line)
     with open(cfg.get("output_dir", f"./output/{name}"), 'w') as f:
         f.writelines(lines)
-    print('%d num_batches_tracked skipped' % tot)
+    # print('%d num_batches_tracked skipped' % tot)
 
 
 def damage_masks(labels, shift=True, scale=True, rotate=True):

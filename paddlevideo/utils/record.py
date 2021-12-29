@@ -22,19 +22,19 @@ __all__ = ['AverageMeter', 'build_record', 'log_batch', 'log_epoch']
 
 
 def build_record(cfg):
-    framework_type = cfg.get('framework')
+    framework_type = cfg.get('framework', '')
     record_list = [
         ("loss", AverageMeter('loss', '7.5f')),
         ("lr", AverageMeter('lr', 'f', need_avg=False)),
     ]
-    if 'Recognizer1D' in cfg.framework:  #TODO: required specify str in framework
+    if 'Recognizer1D' in framework_type:  #TODO: required specify str in framework
         record_list.append(("hit_at_one", AverageMeter("hit_at_one", '.5f')))
         record_list.append(("perr", AverageMeter("perr", '.5f')))
         record_list.append(("gap", AverageMeter("gap", '.5f')))
-    elif 'Recognizer' in cfg.framework:
+    elif 'Recognizer' in framework_type:
         record_list.append(("top1", AverageMeter("top1", '.5f')))
         record_list.append(("top5", AverageMeter("top5", '.5f')))
-    elif 'FastRCNN' in cfg.framework:
+    elif 'FastRCNN' in framework_type:
         record_list.append(("recall@thr=0.5", AverageMeter("recall@thr=0.5", '.5f')))
         record_list.append(("prec@thr=0.5", AverageMeter("prec@thr=0.5", '.5f')))
         record_list.append(("recall@top3", AverageMeter("recall@top3", '.5f')))

@@ -1,5 +1,4 @@
 MODEL: #MODEL field
-  framework: "ManetSegmentationer_Stage2" #Mandatory ["Recognizer1D", "Recognizer2D", "Recognizer3D", "BMNLocalizer"], indicate the type of network, please refer to the 'paddlevideo/modeling/framework/'.
   backbone:
     name: "DeepLab" #Optional, indicate the type of backbone, please refer to the 'paddlevideo/modeling/backbones/'.
     backbone: 'resnet'
@@ -9,6 +8,7 @@ MODEL: #MODEL field
   head:
     name: "IntVOS"
     pretrained: "/home/lc/manet/save_step_80000/save_step_80000.pdparams"
+#    pretrained: "/root/codespace/manet/save_step_80000.pdparams/save_step_80000.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
@@ -45,6 +45,16 @@ DATASET: #DATASET field
   test:
     format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
     file_path: "/home/lc/manet/data/DAVIS" #Mandotary, test data index file path.
+#  train:
+#    format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
+#    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
+#  valid:
+#    format: "DAVIS2017_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
+#    file_path: "/root/datasets/DAVIS" #Mandatory, train data index file path
+#  test:
+#    format: "DAVIS2017_Feature_ExtractDataset" #Mandotary, indicate the type of test dataset, please refer to the 'paddlevideo/loader/dataset'.
+#    file_path: "/root/datasets/DAVIS" #Mandotary, test data index file path.
+
 
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
@@ -102,8 +112,6 @@ INFERENCE:
     output_path: inference_results
 
 model_name: "Manet_stage2" #Mandatory, model name.
-log_interval: 50 #Optional, the interval of logger.
 epochs: 6000 #int(200000 * DATASET.batch_size / 60.) #Mandatory, total epoch
 log_level: "INFO" #Optional, the logger level.
 resume_epoch: 0
-save_interval: 500

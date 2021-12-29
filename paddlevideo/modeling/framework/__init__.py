@@ -17,12 +17,12 @@ from .localizers import BaseLocalizer, BMNLocalizer
 from .partitioners import BasePartitioner, TransNetV2Partitioner
 from .multimodal import BaseMultimodal, ActBert
 from .segmentationers import BaseSegmentationer, ManetSegmentationer_Stage1, Manet_stage2_train_helper, \
-    ManetSegmentationer_Stage2, Manet_test_helper
+     Manet_test_helper
 
 __all__ = [
     'BaseRecognizer', 'Recognizer2D', 'BaseLocalizer', 'BMNLocalizer',
     'BasePartitioner', 'TransNetV2Partitioner', 'BaseSegmentationer',
     'ManetSegmentationer_Stage1', 'Manet_stage2_train_helper',
-    'ManetSegmentationer_Stage2', 'Manet_test_helper', 'BaseMultimodal',
+    'Manet_test_helper', 'BaseMultimodal',
     'ActBert'
 ]

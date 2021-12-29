@@ -851,7 +851,7 @@ class Manet_test_helper(BaseSegmentationer):
                     output_dir = cfg.get("output_dir",
                                          f"./output/{model_name}")
                     inter_file_path = os.path.join(
-                        output_dir, model_name, sequence,
+                        output_dir, sequence,
                         'interactive' + str(n_interaction),
                         'turn' + str(inter_turn))
                     if is_save_image:

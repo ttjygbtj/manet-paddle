@@ -9,6 +9,7 @@ MODEL: #MODEL field
   head:
     name: "IntVOS"
     pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
+#    pretrained: "/root/codespace/manet/init_for_align.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
       top_k_percent_pixels: 0.15
@@ -30,7 +31,7 @@ DATASET: #DATASET field
   train:
     format: "DAVIS2017_VOS_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
     file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
-
+#    file_path: "/root/datasets/DAVIS"
 
 PIPELINE: #PIPELINE field
   train: #Mandotary, indicate the pipeline to deal with the training data, please refer to the 'paddlevideo/loader/pipelines/'
