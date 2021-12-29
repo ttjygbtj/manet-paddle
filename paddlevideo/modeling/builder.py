@@ -59,6 +59,7 @@ def build_head(cfg):
 
 def build_loss(cfg):
     """Build loss."""
+    print(build(cfg, LOSSES))
     return build(cfg, LOSSES)
 
 
