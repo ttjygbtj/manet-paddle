@@ -3,7 +3,7 @@ import paddle.nn as nn
 # from reprod_log.utils import paddle2np
 import paddle
 
-from paddlevideo.utils.manet_utils import normal_, fill_, zero_
+from paddlevideo.utils.manet_utils import normal_, fill_, zero_, write_dict
 
 
 class Bottleneck(nn.Layer):
@@ -114,11 +114,10 @@ class ResNet(nn.Layer):
                                          stride=strides[3],
                                          dilation=dilations[3],
                                          BatchNorm=BatchNorm)
-        # self.layer4 = self._make_layer(block, 512, layers[3], stride=strides[3], dilation=dilations[3], BatchNorm=BatchNorm)
-        self._init_weight()
+        self.pretrained = pretrained
+        self.init_weight()
 
-        if pretrained is not None:
-            self._load_pretrained_model(pretrained)
+
 
     def _make_layer(self,
                     block,
@@ -190,43 +189,51 @@ class ResNet(nn.Layer):
         return nn.Sequential(*layers)
 
     def forward(self, input):
-        #         print('input:', input.mean().item())
         x = self.conv1(input)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
         x = self.layer1(x)
-        #         print('resnet layer1:', x.mean().item(), x.std().item())
         low_level_feat = x
         x = self.layer2(x)
-        #         print('resnet layer2:', x.mean().item(), x.std().item())
         x = self.layer3(x)
-        #         print('resnet layer3:', x.mean().item(), x.std().item())
         x = self.layer4(x)
-        #         print('resnet layer4:', x.mean().item(), x.std().item())
         return x, low_level_feat
 
+    def init_weight(self):
+        if isinstance(self.pretrained, str) and self.pretrained.strip() != "":
+            self._load_pretrained_model(self.pretrained)
+        else:
+            self._init_weight()
     def _init_weight(self):
         for m in self.sublayers():
             if isinstance(m, nn.Conv2D):
                 n = m._kernel_size[0] * m._kernel_size[1] * m._out_channels
                 fill_(m.weight, 1)
-                # normal_(m.weight, 0, math.sqrt(2. / n))
             elif isinstance(m, nn.BatchNorm2D):
                 fill_(m.weight, 1)
                 zero_(m.bias)
         return self.sublayers()
 
     def _load_pretrained_model(self, pretrained):
-        pretrain_dict = paddle.load(pretrained)
+        try:
+            pretrain_dict = paddle.load(pretrained)['state_dict']
+        except:
+            pretrain_dict = paddle.load(pretrained)
         model_dict = {}
         state_dict = self.state_dict()
         for k, v in pretrain_dict.items():
-            if k in state_dict:
-                model_dict[k] = v
+            if 'num_batches_tracked' not in k:
+                if k in state_dict:
+                    model_dict[k] = v
+                else:
+                    print(f'pretrained -----{k} -------is not in model')
+        write_dict(pretrain_dict, 'init_for_align.txt')
+        write_dict(state_dict, 'model.txt')
         state_dict.update(model_dict)
         self.set_state_dict(state_dict)
+        print('loaded pretrained model')
 
 
 def ResNet101(output_stride, BatchNorm, pretrained=None):
@@ -242,7 +249,7 @@ def ResNet101(output_stride, BatchNorm, pretrained=None):
 
 
 def build_backbone(output_stride, BatchNorm, pretrained):
-    return ResNet101(output_stride, BatchNorm)
+    return ResNet101(output_stride, BatchNorm, pretrained)
 
 
 if __name__ == "__main__":
