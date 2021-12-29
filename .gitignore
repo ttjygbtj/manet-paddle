@@ -1,5 +1,6 @@
 # Basic
 *.log
+**/manet_stage1.yaml
 **/*.pyc
 __pycache__/
 *.swp

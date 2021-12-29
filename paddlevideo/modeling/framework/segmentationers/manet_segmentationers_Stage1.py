@@ -75,6 +75,8 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
                             gt_ids=obj_nums,
                             k_nearest_neighbors=self.cfg['TRAIN']['knns'])
         label_and_obj_dic = {}
+        label_dic = {}
+        obj_dict = {}
         for i, seq_ in enumerate(seq_names):
             label_and_obj_dic[seq_] = (label2s[i], obj_nums[i])
         for seq_ in tmp_dic.keys():
@@ -84,16 +86,18 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
                                                         mode='bilinear',
                                                         align_corners=True)
             tmp_dic[seq_] = tmp_pred_logits
-
+            # print('tmp_pred_logits.shape', tmp_pred_logits.shape)
             label_tmp, obj_num = label_and_obj_dic[seq_]
             obj_ids = np.arange(1, obj_num + 1)
+            # print('obj_ids.shape', obj_ids.shape)
             obj_ids = paddle.to_tensor(obj_ids)
             obj_ids = int_(obj_ids)
-
+            obj_dict[seq_] = obj_ids
+            label_dic[seq_] = label_tmp
+            # print('label_tmp.shape', label_tmp.shape)
         loss_metrics = {
             'loss':
-                self.head.loss().forward(tmp_dic, label_tmp, step, obj_ids=obj_ids, seq_=seq_) / bs
-            # self.head.loss(tmp_dic, label_tmp, step, obj_ids=obj_ids, seq_=seq_) / bs
+                self.head.loss(dic_tmp=tmp_dic, label_dic=label_dic, step=step, obj_dict=obj_dict) / bs
         }
         return loss_metrics
 
