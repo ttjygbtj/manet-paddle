@@ -24,8 +24,8 @@ TRAIN: #TRAIN
   knns: 1
   damage_initial_previous_frame_mask: True
 DATASET: #DATASET field
-  batch_size: 1 #Mandatory, batch size per gpu.
-  test_batch_size: 1 #Optional, test batch size per gpu.
+  batch_size: 2 #Mandatory, batch size per gpu.
+  test_batch_size: 2 #Optional, test batch size per gpu.
   num_workers: 0 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_VOS_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
@@ -47,9 +47,7 @@ PIPELINE: #PIPELINE field
       - ToTensor_manet:
 DATALOADER:
   train:
-    batch_size: 2
     shuffle: True
-    num_workers: 2
     places: None
 OPTIMIZER: #OPTIMIZER field
   name: 'Momentum' #Mandatory, the type of optimizer, associate to the 'paddlevideo/solver/'

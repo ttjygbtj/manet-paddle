@@ -179,7 +179,6 @@ class Manet_stage2_train_helper(object):
 
             for r in range(round_):
                 if r == 0:  #### r==0: Train the interaction branch in the first round
-                    print('start new')
                     global_map_tmp_dic = {}
                     train_dataset.init_ref_frame_dic()
                 train_dataloader_setting = dict(batch_size=batch_size,
@@ -204,9 +203,6 @@ class Manet_stage2_train_helper(object):
                             train_dataloader_setting)
                 if not train_loader:
                     train_loader = build_dataloader(**train_dataloader_setting)
-                print('round:{} start'.format(r))
-                print(len(train_dataset))
-                print(len(train_loader))
 
                 for epoch in range(epoch_per_round):
                     for ii, sample in enumerate(train_loader):
@@ -312,8 +308,7 @@ class Manet_stage2_train_helper(object):
                         for i, seq_ in enumerate(seq_names):
                             label_and_obj_dic[seq_] = (ref_frame_gts[i],
                                                        obj_nums[i])
-                        label_tmps = {}
-                        obj_idses = {}
+                        label_dic = {}
                         for seq_ in tmp_dic.keys():
                             tmp_pred_logits = tmp_dic[seq_]
                             tmp_pred_logits = nn.functional.interpolate(
@@ -324,27 +319,19 @@ class Manet_stage2_train_helper(object):
                             tmp_dic[seq_] = tmp_pred_logits
 
                             label_tmp, obj_num = label_and_obj_dic[seq_]
-                            label_tmps[seq_] = label_tmp
-                            obj_ids = np.arange(0, obj_num + 1)
-                            obj_ids = paddle.to_tensor(obj_ids)
-                            obj_idses[seq_] = paddle.to_tensor(obj_ids,
-                                                               dtype='int64')
+                            label_dic[seq_] = long_(label_tmp)
                         outputs = {}
                         if parallel:
                             for c in model.children():
                                 outputs['loss'] = c.head.loss(
                                     dic_tmp=tmp_dic,
-                                    label_tmp=label_tmps,
-                                    step=step,
-                                    obj_ids=obj_idses,
-                                    seq_=seq_)
+                                    label_dic=label_dic,
+                                    step=step)
                         else:
                             outputs['loss'] = model.head.loss(
                                 dic_tmp=tmp_dic,
-                                label_tmp=label_tmp,
-                                step=step,
-                                obj_ids=obj_ids,
-                                seq_=seq_)
+                                label_tmp=label_dic,
+                                step=step)
                         # 4.2 backward
                         if use_gradient_accumulation and i == 0:  # Use gradient accumulation strategy
                             optimizer.clear_grad()

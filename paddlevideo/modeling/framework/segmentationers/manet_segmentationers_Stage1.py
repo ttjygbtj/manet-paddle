@@ -86,15 +86,8 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
                                                         mode='bilinear',
                                                         align_corners=True)
             tmp_dic[seq_] = tmp_pred_logits
-            # print('tmp_pred_logits.shape', tmp_pred_logits.shape)
             label_tmp, obj_num = label_and_obj_dic[seq_]
-            obj_ids = np.arange(1, obj_num + 1)
-            # print('obj_ids.shape', obj_ids.shape)
-            obj_ids = paddle.to_tensor(obj_ids)
-            obj_ids = int_(obj_ids)
-            obj_dict[seq_] = obj_ids
-            label_dic[seq_] = label_tmp
-            # print('label_tmp.shape', label_tmp.shape)
+            label_dic[seq_] = long_(label_tmp)
         loss_metrics = {
             'loss':
                 self.head.loss(dic_tmp=tmp_dic, label_dic=label_dic, step=step, obj_dict=obj_dict) / bs
