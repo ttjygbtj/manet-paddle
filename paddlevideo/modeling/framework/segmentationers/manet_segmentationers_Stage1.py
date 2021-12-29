@@ -92,7 +92,7 @@ class ManetSegmentationer_Stage1(BaseSegmentationer):
 
         loss_metrics = {
             'loss':
-            self.head.loss()(tmp_dic, label_tmp, step, obj_ids=obj_ids, seq_=seq_) / bs
+                self.head.loss(tmp_dic, label_tmp, step, obj_ids=obj_ids, seq_=seq_).forward() / bs
             # self.head.loss(tmp_dic, label_tmp, step, obj_ids=obj_ids, seq_=seq_) / bs
         }
         return loss_metrics
