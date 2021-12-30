@@ -95,7 +95,7 @@ class AverageMeter(object):
         return '{self.name}: {self.val:{self.fmt}}'.format(self=self)
 
 
-def log_batch(metric_list, batch_id, epoch_id, total_epoch, mode, ips):
+def log_batch(metric_list, batch_id, epoch_id, total_epoch, mode, ips, tot_step=None, max_iters=None):
     batch_cost = str(metric_list['batch_time'].value) + ' sec,'
     reader_cost = str(metric_list['reader_time'].value) + ' sec,'
 
@@ -104,7 +104,10 @@ def log_batch(metric_list, batch_id, epoch_id, total_epoch, mode, ips):
         if not (m == 'batch_time' or m == 'reader_time'):
             metric_values.append(metric_list[m].value)
     metric_str = ' '.join([str(v) for v in metric_values])
-    epoch_str = "epoch:[{:>3d}/{:<3d}]".format(epoch_id, total_epoch)
+    if max_iters:
+        epoch_str = "iter:[{:>3d}/{:<3d}]".format(tot_step, max_iters)
+    else:
+        epoch_str = "epoch:[{:>3d}/{:<3d}]".format(epoch_id, total_epoch)
     step_str = "{:s} step:{:<4d}".format(mode, batch_id)
 
     logger.info("{:s} {:s} {:s} {:s} {:s} {}".format(

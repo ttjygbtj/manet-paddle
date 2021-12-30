@@ -13,11 +13,11 @@
 # limitations under the license.
 
 from .base import BaseSegmentationer
-from .manet_segmentationers_Stage1 import ManetSegmentationer_Stage1
+from .manet_segmentationers_Stage1 import ManetSegmentationer_Stage1, Manet_predict_helper
 from .manet_segmentationers_Stage2 import Manet_stage2_train_helper, Manet_test_helper
 
 __all__ = [
     'BaseSegmentationer', 'ManetSegmentationer_Stage1',
     'Manet_stage2_train_helper',
-    'Manet_test_helper'
+    'Manet_test_helper', 'Manet_predict_helper'
 ]

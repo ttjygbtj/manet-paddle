@@ -66,11 +66,6 @@ def parse_args():
         default=None,
         help='fixed all random seeds when the program is running')
     parser.add_argument(
-        '--max_iters',
-        type=int,
-        default=None,
-        help='max iterations when training(this argonly used in test_tipc)')
-    parser.add_argument(
         '-p',
         '--profiler_options',
         type=str,
@@ -108,15 +103,6 @@ def main():
         train_model_multigrid(cfg,
                               world_size=world_size,
                               validate=args.validate)
-    elif args.multistage:
-        train_model_multistage(cfg,
-                               weights=args.weights,
-                               parallel=parallel,
-                               validate=args.validate,
-                               use_fleet=args.fleet,
-                               amp=args.amp,
-                               max_iters=args.max_iters,
-                               profiler_options=args.profiler_options)
     else:
         train_model(cfg,
                     weights=args.weights,
@@ -124,7 +110,6 @@ def main():
                     validate=args.validate,
                     use_fleet=args.fleet,
                     amp=args.amp,
-                    max_iters=args.max_iters,
                     profiler_options=args.profiler_options)
 
 

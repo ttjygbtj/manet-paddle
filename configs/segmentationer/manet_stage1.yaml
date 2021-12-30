@@ -8,7 +8,7 @@ MODEL: #MODEL field
     freeze_bn: False
   head:
     name: "IntVOS"
-    #    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
+#    pretrained: "/home/lc/manet/init_for_align/init_for_align.pdparams"
     pretrained: "/root/codespace/manet_paddle/init_for_align.pdparams"
     loss_cfg:
       name: "Added_CrossEntropyLoss"
@@ -24,13 +24,17 @@ MODEL: #MODEL field
 TRAIN: #TRAIN
   knns: 1
   damage_initial_previous_frame_mask: True
+TEST:
+  name: 'Manet_predict_helper'
+  knns: 1
+  is_save_image: True
 DATASET: #DATASET field
   batch_size: 2 #Mandatory, batch size per gpu.
   test_batch_size: 2 #Optional, test batch size per gpu.
   num_workers: 0 #Mandatory, the number of subprocess on each GPU.
   train:
     format: "DAVIS2017_VOS_TrainDataset" #Mandatory, indicate the type of train dataset, please refer to the 'paddlevidel/loader/dateset'.
-    #    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
+#    file_path: "/home/lc/manet/data/DAVIS" #Mandatory, train data index file path
     file_path: "/root/datasets/DAVIS"
 
 PIPELINE: #PIPELINE field
@@ -45,6 +49,11 @@ PIPELINE: #PIPELINE field
           step: 10
       - Resize_manet:
           output_size: [ 416, 416 ]
+      - ToTensor_manet:
+  test: #Mandatory, indicate the pipeline to deal with the validing data. please refer to the 'paddlevideo/loader/pipelines/'
+    transform: #Mandatory, image transform operator.
+      - Resize_manet:
+          output_size: [ 480, 854 ]
       - ToTensor_manet:
 DATALOADER:
   train:
@@ -72,7 +81,8 @@ METRIC:
 
 model_name: "Manet_stage1" #Mandatory, model name.
 log_interval: 50 #Optional, the interval of logger.
-epochs: 6000 #int(200000 * DATASET.batch_size / 60.) #Mandatory, total epoch
+#epochs: 674 #Mandatory, total epoch
 log_level: "INFO" #Optional, the logger level.
 resume_epoch: 0
-save_interval: 1000
+save_interval: 200
+max_iters: 101000

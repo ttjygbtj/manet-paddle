@@ -19,7 +19,7 @@ import time
 import os
 import os.path as osp
 import time
-
+import warnings
 import paddle
 import paddle.distributed as dist
 import paddle.distributed.fleet as fleet
@@ -46,9 +46,12 @@ def train_model(cfg,
                 parallel=True,
                 validate=True,
                 amp=False,
-                max_iters=None,
                 use_fleet=False,
                 profiler_options=None):
+    if cfg.get('max_iters'):
+
+        warnings.warn('afdas', Warning)
+
     """Train model entry
 
     Args:
@@ -70,7 +73,6 @@ def train_model(cfg,
                                              parallel=True,
                                              validate=True,
                                              amp=False,
-                                             max_iters=None,
                                              use_fleet=False,
                                              profiler_options=None)
             return
@@ -211,12 +213,14 @@ def train_model(cfg,
                                        decr_every_n_nan_or_inf=1)
 
     best = 0.
-    for epoch in range(0, cfg.epochs):
+    tot_step = 0
+    epochs = cfg.get('epochs', 1000000)
+    max_iters = cfg.max_iters
+    for epoch in range(0, epochs):
         if epoch < resume_epoch:
             logger.info(
                 f"| epoch: [{epoch + 1}] <= resume_epoch: [{resume_epoch}], continue... "
             )
-            continue
         model.train()
 
         record_list = build_record(cfg.MODEL)
@@ -224,7 +228,8 @@ def train_model(cfg,
         for i, data in enumerate(train_loader):
             """Next two line of code only used in test_tipc,
             ignore it most of the time"""
-            if max_iters is not None and i >= max_iters:
+            tot_step += 1
+            if max_iters is not None and tot_step >= max_iters:
                 break
 
             record_list['reader_time'].update(time.time() - tic)
@@ -236,7 +241,7 @@ def train_model(cfg,
             # AMP #
             if amp:
                 with paddle.amp.auto_cast(custom_black_list={"reduce_mean"}):
-                    outputs = model(data, mode='train', step=i)
+                    outputs = model(data, mode='train')
 
                 avg_loss = outputs['loss']
                 scaled = scaler.scale(avg_loss)
@@ -246,7 +251,10 @@ def train_model(cfg,
                 optimizer.clear_grad()
 
             else:
-                outputs = model(data, mode='train', step=i)
+                if cfg.MODEL.framework == "ManetSegmentationer_Stage1":
+                    outputs = model(data, mode='train', step=tot_step)
+                else:
+                    outputs = model(data, mode='train')
 
                 # 4.2 backward
                 if use_gradient_accumulation and i == 0:  # Use gradient accumulation strategy
@@ -277,7 +285,7 @@ def train_model(cfg,
             if i % cfg.get("log_interval", 10) == 0:
                 ips = "ips: {:.5f} instance/sec.".format(
                     batch_size / record_list["batch_time"].val)
-                log_batch(record_list, i, epoch + 1, cfg.epochs, "train", ips)
+                log_batch(record_list, i, epoch + 1, epochs, "train", ips, tot_step,max_iters)
 
             # learning rate iter step
             if cfg.OPTIMIZER.learning_rate.get("iter_step"):
@@ -302,10 +310,7 @@ def train_model(cfg,
                 rank = dist.get_rank()
             # single_gpu_test and multi_gpu_test
             for i, data in enumerate(valid_loader):
-                if cfg.MODEL.framework == "Manet":
-                    outputs = model(data, mode='valid', step=i)
-                else:
-                    outputs = model(data, mode='valid')
+                outputs = model(data, mode='valid')
                 if cfg.MODEL.framework == "FastRCNN":
                     results.extend(outputs)
 
@@ -320,7 +325,7 @@ def train_model(cfg,
                 if i % cfg.get("log_interval", 10) == 0:
                     ips = "ips: {:.5f} instance/sec.".format(
                         valid_batch_size / record_list["batch_time"].val)
-                    log_batch(record_list, i, epoch + 1, cfg.epochs, "val", ips)
+                    log_batch(record_list, i, epoch + 1, epochs, "val", ips, tot_step, max_iters)
             if cfg.MODEL.framework == "FastRCNN":
                 if parallel:
                     results = collect_results_cpu(results, len(valid_dataset))
@@ -352,14 +357,14 @@ def train_model(cfg,
 
         # use precise bn to improve acc
         if cfg.get("PRECISEBN") and (epoch % cfg.PRECISEBN.preciseBN_interval
-                                     == 0 or epoch == cfg.epochs - 1):
+                                     == 0 or epoch == epochs - 1):
             do_preciseBN(
                 model, train_loader, parallel,
                 min(cfg.PRECISEBN.num_iters_preciseBN, len(train_loader)))
 
         # 5. Validation
         if validate and (epoch % cfg.get("val_interval", 1) == 0
-                         or epoch == cfg.epochs - 1):
+                         or epoch == epochs - 1):
             with paddle.no_grad():
                 best, save_best_flag = evaluate(best, epoch)
             # save best
@@ -381,14 +386,25 @@ def train_model(cfg,
                     )
 
         # 6. Save model and optimizer
-        if epoch % cfg.get("save_interval", 1) == 0 or epoch == cfg.epochs - 1:
-            save(
-                optimizer.state_dict(),
-                osp.join(output_dir,
-                         model_name + f"_epoch_{epoch + 1:05d}.pdopt"))
-            save(
-                model.state_dict(),
-                osp.join(output_dir,
-                         model_name + f"_epoch_{epoch + 1:05d}.pdparams"))
+        if max_iters:
+            if tot_step and tot_step % cfg.get("save_step", 20000) == 0 or epoch == max_iters - 1:
+                save(
+                    optimizer.state_dict(),
+                    osp.join(output_dir,
+                             model_name + f"_epoch_{tot_step + 1:05d}.pdopt"))
+                save(
+                    model.state_dict(),
+                    osp.join(output_dir,
+                             model_name + f"_epoch_{tot_step + 1:05d}.pdparams"))
+        else:
+            if epoch and epoch % cfg.get("save_interval", 1) == 0 or epoch == epochs - 1:
+                save(
+                    optimizer.state_dict(),
+                    osp.join(output_dir,
+                             model_name + f"_epoch_{epoch + 1:05d}.pdopt"))
+                save(
+                    model.state_dict(),
+                    osp.join(output_dir,
+                             model_name + f"_epoch_{epoch + 1:05d}.pdparams"))
 
     logger.info(f'training {model_name} finished')

@@ -25,7 +25,7 @@ from ..registry import PIPELINES
 def get_start_end_idx(video_size, clip_size, clip_idx, num_clips):
     delta = max(video_size - clip_size, 0)
     if clip_idx == -1:  # here
-        # Random temporal sampling.
+        # Random temporal sampling.c x
         start_idx = random.uniform(0, delta)
     else:  # ignore
         # Uniformly sample the clip with the given index.

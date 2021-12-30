@@ -64,8 +64,6 @@ class Resize_manet(object):
 
     def __call__(self, results):
         img1 = results['img1']
-        # img2 = results['img2']
-        # ref_img=results['ref_img']
         h, w = img1.shape[:2]
         if self.output_size == (h, w):
             return results
@@ -84,12 +82,6 @@ class Resize_manet(object):
 
             tmp = cv2.resize(tmp, dsize=(new_w, new_h), interpolation=flagval)
             results[elem] = tmp
-
-        #             for elem in results:
-        #                 if 'img' in elem:
-        #                     print('resize', elem, tmp.mean())
-        #                     print('resize', elem, results[elem].mean().item())
-
         return results
 
 
