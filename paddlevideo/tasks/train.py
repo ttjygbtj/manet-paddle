@@ -290,7 +290,16 @@ def train_model(cfg,
             # learning rate iter step
             if cfg.OPTIMIZER.learning_rate.get("iter_step"):
                 lr.step()
-
+            if cfg.get("save_step"):
+                if tot_step and (tot_step % cfg.save_step == 0 or (max_iters and tot_step == max_iters - 1)):
+                    save(
+                        optimizer.state_dict(),
+                        osp.join(output_dir,
+                                 model_name + f"_epoch_{tot_step + 1:05d}.pdopt"))
+                    save(
+                        model.state_dict(),
+                        osp.join(output_dir,
+                                 model_name + f"_epoch_{tot_step + 1:05d}.pdparams"))
         # learning rate epoch step
         if not cfg.OPTIMIZER.learning_rate.get("iter_step"):
             lr.step()
@@ -386,18 +395,7 @@ def train_model(cfg,
                     )
 
         # 6. Save model and optimizer
-        if max_iters:
-            if tot_step and tot_step % cfg.get("save_step", 20000) == 0 or epoch == max_iters - 1:
-                save(
-                    optimizer.state_dict(),
-                    osp.join(output_dir,
-                             model_name + f"_epoch_{tot_step + 1:05d}.pdopt"))
-                save(
-                    model.state_dict(),
-                    osp.join(output_dir,
-                             model_name + f"_epoch_{tot_step + 1:05d}.pdparams"))
-        else:
-            if epoch and epoch % cfg.get("save_interval", 1) == 0 or epoch == epochs - 1:
+        if epoch and epoch % cfg.get("save_interval", 1) == 0 or epoch == epochs - 1:
                 save(
                     optimizer.state_dict(),
                     osp.join(output_dir,
