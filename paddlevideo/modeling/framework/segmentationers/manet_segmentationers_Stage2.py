@@ -624,7 +624,7 @@ class Manet_stage2_train_helper(BaseSegmentationer):
 @TEST.register()
 class Manet_test_helper(BaseSegmentationer):
     def __init__(self, **cfg):
-        cfg['MODEL'].head.pretrained = ''  # disable pretrain model init
+        cfg['MODEL'].head.pretrained = ''
         cfg['MODEL'].head.test_mode = True
         super().__init__(**cfg['MODEL'])
         self.model = nn.Sequential()
@@ -752,6 +752,8 @@ class Manet_test_helper(BaseSegmentationer):
 
                     else:
                         n_interaction += 1
+                        with open(f'{n_interaction}.json', 'w') as f:
+                            json.dump(scribbles, f)
                     inter_file.write(sequence + ' ' + 'interaction' +
                                      str(n_interaction) + ' ' + 'frame' +
                                      str(start_annotated_frame) + '\n')
