@@ -215,7 +215,7 @@ def train_model(cfg,
     best = 0.
     tot_step = 0
     epochs = cfg.get('epochs', 1000000)
-    max_iters = cfg.max_iters
+    max_iters = cfg.get('max_iters', None)
     for epoch in range(0, epochs):
         if epoch < resume_epoch:
             logger.info(
@@ -290,7 +290,6 @@ def train_model(cfg,
             # learning rate iter step
             if cfg.OPTIMIZER.learning_rate.get("iter_step"):
                 lr.step()
-            print(tot_step)
             if cfg.get("save_step"):
                 if tot_step and (tot_step % cfg.save_step == 0 or (max_iters and tot_step == max_iters - 1)):
                     save(
