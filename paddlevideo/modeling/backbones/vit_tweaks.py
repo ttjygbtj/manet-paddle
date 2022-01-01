@@ -76,6 +76,7 @@ def drop_path(x, drop_prob=0., training=False):
 class DropPath(nn.Layer):
     """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
     """
+
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
@@ -85,6 +86,7 @@ class DropPath(nn.Layer):
 
 
 class Identity(nn.Layer):
+
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -93,6 +95,7 @@ class Identity(nn.Layer):
 
 
 class Mlp(nn.Layer):
+
     def __init__(self,
                  in_features,
                  hidden_features=None,
@@ -119,6 +122,7 @@ class Mlp(nn.Layer):
 
 
 class Attention(nn.Layer):
+
     def __init__(self,
                  dim,
                  num_heads=8,
@@ -156,6 +160,7 @@ class Attention(nn.Layer):
 
 
 class Block(nn.Layer):
+
     def __init__(self,
                  dim,
                  num_heads,
@@ -290,6 +295,7 @@ class Block(nn.Layer):
 class PatchEmbed(nn.Layer):
     """ Image to Patch Embedding
     """
+
     def __init__(self,
                  img_size=224,
                  patch_size=16,
@@ -328,6 +334,7 @@ class PatchEmbed(nn.Layer):
 class VisionTransformer_tweaks(nn.Layer):
     """ Vision Transformer with support for patch input
     """
+
     def __init__(self,
                  pretrained=None,
                  img_size=224,
@@ -381,6 +388,7 @@ class VisionTransformer_tweaks(nn.Layer):
                 default_initializer=zeros_,
                 attr=ParamAttr(regularizer=L2Decay(0.0)))
             self.time_drop = nn.Dropout(p=drop_rate)
+
         self.add_parameter("pos_embed", self.pos_embed)
         self.add_parameter("cls_token", self.cls_token)
 

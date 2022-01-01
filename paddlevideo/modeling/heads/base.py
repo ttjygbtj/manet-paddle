@@ -41,6 +41,7 @@ class BaseHead(nn.Layer):
         ls_eps (float): label smoothing epsilon. Default: 0. .
 
     """
+
     def __init__(
         self,
         num_classes,
@@ -55,6 +56,7 @@ class BaseHead(nn.Layer):
         self.num_classes = num_classes
         self.in_channels = in_channels
         self.loss_func = build_loss(loss_cfg)
+        #self.multi_class = multi_class NOTE(shipping): not supported now
         self.ls_eps = ls_eps
 
     @abstractmethod

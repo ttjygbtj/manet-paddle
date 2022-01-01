@@ -16,9 +16,10 @@ from .train import train_model
 from .test import test_model
 from .train_dali import train_dali
 from .train_multigrid import train_model_multigrid
-from .train_multistage import train_model_multistage
 
 __all__ = [
-    'train_model', 'test_model', 'train_dali', 'train_model_multigrid',
-    'train_model_multistage'
+    'train_model',
+    'test_model',
+    'train_dali',
+    'train_model_multigrid',
 ]

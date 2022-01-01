@@ -52,6 +52,7 @@ def bbox2result(bboxes, labels, num_classes, img_shape, thr=0.01):
 
 @HEADS.register()
 class AVARoIHead(nn.Layer):
+
     def __init__(self,
                  assigner,
                  sampler,
@@ -71,7 +72,7 @@ class AVARoIHead(nn.Layer):
             self.init_bbox_head(bbox_roi_extractor, bbox_head)
 
     def init_assigner_sampler(self):
-        """Initialize assigner and batch_sampler."""
+        """Initialize assigner and sampler."""
         self.bbox_assigner = None
         self.bbox_sampler = None
         self.bbox_assigner = builder.build_assigner(self.assigner)

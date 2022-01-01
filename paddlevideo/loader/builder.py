@@ -46,7 +46,7 @@ def build_dataset(cfg):
     """
     # XXX: ugly code here!
     cfg_dataset, cfg_pipeline = cfg
-    cfg_dataset['pipeline'] = build_pipeline(cfg_pipeline)
+    cfg_dataset.pipeline = build_pipeline(cfg_pipeline)
     dataset = build(cfg_dataset, DATASETS, key="format")
     return dataset
 
@@ -149,7 +149,8 @@ def term_mp(sig_num, frame):
     """
     pid = os.getpid()
     pgid = os.getpgid(os.getpid())
-    logger.info("main proc {} exit, kill process group " "{}".format(pid, pgid))
+    logger.info("main proc {} exit, kill process group "
+                "{}".format(pid, pgid))
     os.killpg(pgid, signal.SIGKILL)
     return
 

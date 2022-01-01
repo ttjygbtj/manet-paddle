@@ -10,7 +10,6 @@ __pycache__/
 __pycache__/
 *.py[cod]
 *$py.class
-**/*.icloud
 **/*.png
 **/*.jpg
 

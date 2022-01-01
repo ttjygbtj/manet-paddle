@@ -20,6 +20,7 @@ import paddle
 class TransNetV2Partitioner(BasePartitioner):
     """TransNetV2 Partitioner framework
     """
+
     def forward_net(self, imgs):
         one_hot_pred = self.backbone(imgs)
         return one_hot_pred
@@ -58,15 +59,15 @@ class TransNetV2Partitioner(BasePartitioner):
                                       reg_losses={"comb_reg": comb_reg_loss})
         return loss_metrics
 
-    def infer_step(self, data_batch):
+    def test_step(self, data_batch):
         """Define how the model is going to test, from input to output."""
+        # NOTE: (shipping) when testing, the net won't call head.loss, we deal with the test processing in /paddlevideo/metrics
         frame_sequence = data_batch[0]
         one_hot_pred = self.forward_net(frame_sequence)
         return one_hot_pred
 
-    def test_step(self, data_batch):
+    def infer_step(self, data_batch):
         """Define how the model is going to test, from input to output."""
-        # NOTE: (shipping) when testing, the net won't call head.loss, we deal with the test processing in /paddlevideo/metrics
         frame_sequence = data_batch[0]
         one_hot_pred = self.forward_net(frame_sequence)
         return one_hot_pred

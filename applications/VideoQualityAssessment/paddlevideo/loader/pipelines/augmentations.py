@@ -29,6 +29,7 @@ class Scale(object):
     Args:
         short_size(float | int): Short size of an image will be scaled to the short_size.
     """
+
     def __init__(self, short_size):
         self.short_size = short_size
 
@@ -70,6 +71,7 @@ class RandomCrop(object):
     Args:
         target_size(int): Random crop a square with the target_size from an image.
     """
+
     def __init__(self, target_size):
         self.target_size = target_size
 
@@ -110,6 +112,7 @@ class CenterCrop(object):
     Args:
         target_size(int): Center crop a square with the target_size from an image.
     """
+
     def __init__(self, target_size):
         self.target_size = target_size
 
@@ -139,6 +142,7 @@ class CenterCrop(object):
 
 @PIPELINES.register()
 class MultiScaleCrop(object):
+
     def __init__(
             self,
             target_size,  #NOTE: named target size now, but still pass short size in it!
@@ -241,6 +245,7 @@ class RandomFlip(object):
     Args:
         p(float): Random flip images with the probability p.
     """
+
     def __init__(self, p=0.5):
         self.p = p
 
@@ -271,6 +276,7 @@ class Image2Array(object):
     Args:
         transpose: whether to transpose or not, default True, False for slowfast.
     """
+
     def __init__(self, transpose=True):
         self.transpose = transpose
 
@@ -300,6 +306,7 @@ class Normalization(object):
         std(Sequence[float]): std values of different channels.
         tensor_shape(list): size of mean, default [3,1,1]. For slowfast, [1,1,1,3]
     """
+
     def __init__(self, mean, std, tensor_shape=[3, 1, 1]):
         if not isinstance(mean, Sequence):
             raise TypeError(
@@ -331,9 +338,10 @@ class JitterScale(object):
     """
     Scale image, while the target short size is randomly select between min_size and max_size.
     Args:
-        min_size: Lower bound for random batch_sampler.
-        max_size: Higher bound for random batch_sampler.
+        min_size: Lower bound for random sampler.
+        max_size: Higher bound for random sampler.
     """
+
     def __init__(self,
                  min_size,
                  max_size,
@@ -395,6 +403,7 @@ class MultiCrop(object):
     Args:
         target_size(int): Random crop a square with the target_size from an image.
     """
+
     def __init__(self,
                  target_size,
                  default_crop_size=224,
@@ -474,6 +483,7 @@ class PackOutput(object):
     Args:
         alpha(int): temporal length of fast/slow
     """
+
     def __init__(self, alpha):
         self.alpha = alpha
 

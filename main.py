@@ -18,7 +18,7 @@ import numpy as np
 import paddle
 
 from paddlevideo.tasks import (test_model, train_dali, train_model,
-                               train_model_multigrid, train_model_multistage)
+                               train_model_multigrid)
 from paddlevideo.utils import get_config, get_dist_info
 
 
@@ -43,9 +43,6 @@ def parse_args():
     parser.add_argument('--multigrid',
                         action='store_true',
                         help='whether to use multigrid training')
-    parser.add_argument('--multistage',
-                        action='store_true',
-                        help='whether to use multistage training')
     parser.add_argument('-w',
                         '--weights',
                         type=str,

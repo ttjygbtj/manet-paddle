@@ -9,32 +9,35 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 from abc import abstractmethod
+
+import paddle
 import paddle.nn as nn
+from paddlevideo.modeling.registry import ESTIMATORS
+from paddlevideo.utils import get_logger
+
 from ... import builder
 
+logger = get_logger("paddlevideo")
 
-class BasePartitioner(nn.Layer):
-    """Base class for Partition.
-    All partitioner should subclass it.
-    All subclass should overwrite:
-    - Methods:``train_step``, define your train step.
-    - Methods:``valid_step``, define your valid step, always the same as train_step.
-    - Methods:``test_step``, define your test step.
+
+@ESTIMATORS.register()
+class BaseEstimator(nn.Layer):
+    """BaseEstimator
+
     """
 
     def __init__(self, backbone=None, head=None):
         super().__init__()
-        if backbone != None:
+        if backbone is not None:
             self.backbone = builder.build_backbone(backbone)
             if hasattr(self.backbone, 'init_weights'):
                 self.backbone.init_weights()
         else:
             self.backbone = None
-        if head != None:
+
+        if head is not None:
             self.head_name = head.name
             self.head = builder.build_head(head)
             if hasattr(self.head, 'init_weights'):
@@ -42,18 +45,10 @@ class BasePartitioner(nn.Layer):
         else:
             self.head = None
 
-    def init_weights(self):
-        """Initialize the model network weights. """
-        if getattr(self.backbone, 'init_weights'):
-            self.backbone.init_weights()
-        else:
-            pass
-
     def forward(self, data_batch, mode='infer'):
         """
         1. Define how the model is going to run, from input to output.
         2. Console of train, valid, test or infer step
-        3. Set mode='infer' is used for saving inference model, refer to tools/export_model.py
         """
         if mode == 'train':
             return self.train_step(data_batch)
@@ -67,19 +62,22 @@ class BasePartitioner(nn.Layer):
             raise NotImplementedError
 
     @abstractmethod
-    def train_step(self, data_batch, **kwargs):
-        """Training step.  input_data_batch -> loss_metric
+    def train_step(self, data_batch):
+        """Define how the model is going to train, from input to output.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def val_step(self, data_batch, **kwargs):
-        """Validating setp. input_data_batch -> loss_metric
-        """
+    def val_step(self, data_batch):
+        """Define how the model is going to valid, from input to output."""
         raise NotImplementedError
 
     @abstractmethod
-    def test_step(self, data_batch, **kwargs):
-        """Tets setp. to get acc in test data. input_data_batch -> output
-        """
+    def test_step(self, data_batch):
+        """Define how the model is going to test, from input to output."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def infer_step(self, data_batch):
+        """Define how the model is going to infer, from input to output."""
         raise NotImplementedError

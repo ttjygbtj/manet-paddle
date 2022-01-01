@@ -38,6 +38,7 @@ class ConvBNLayer(nn.Layer):
     Note: weight and bias initialization include initialize values and name the restored parameters, values initialization are explicit declared in the ```init_weights``` method.
 
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -81,6 +82,7 @@ class ConvBNLayer(nn.Layer):
 
 
 class BottleneckBlock(nn.Layer):
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -140,6 +142,7 @@ class BottleneckBlock(nn.Layer):
 
 
 class BasicBlock(nn.Layer):
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -200,6 +203,7 @@ class ResNetTSM(nn.Layer):
         depth (int): Depth of resnet model.
         pretrained (str): pretrained model. Default: None.
     """
+
     def __init__(self, depth, num_seg=8, data_format="NCHW", pretrained=None):
         super(ResNetTSM, self).__init__()
         self.pretrained = pretrained
@@ -312,7 +316,7 @@ class ResNetTSM(nn.Layer):
         #    inputs, [-1, inputs.shape[2], inputs.shape[3], inputs.shape[4]])
 
         #NOTE: As paddlepaddle to_static method need a "pure" model to trim. It means from
-        #  1. the phase of generating data[images, label] from batch_sampler
+        #  1. the phase of generating data[images, label] from dataloader
         #     to
         #  2. last layer of a model, always is FC layer
 
