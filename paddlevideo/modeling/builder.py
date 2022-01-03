@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from .registry import BACKBONES, HEADS, LOSSES, RECOGNIZERS, LOCALIZERS, ROI_EXTRACTORS, DETECTORS, BBOX_ASSIGNERS, \
-    BBOX_SAMPLERS, BBOX_CODERS, PARTITIONERS, SEGMENTATIONERS, MULTIMODAL
+    BBOX_SAMPLERS, BBOX_CODERS, PARTITIONERS, SEGMENT, MULTIMODAL
 from ..utils import build
 
 
@@ -74,7 +74,7 @@ def build_localizer(cfg):
 
 def build_segmentationer(cfg):
     """Build detector."""
-    return build(cfg, SEGMENTATIONERS, key='framework')
+    return build(cfg, SEGMENT, key='framework')
 
 
 def build_partitioner(cfg):
@@ -103,7 +103,7 @@ def build_model(cfg, key='framework'):
         return build_partitioner(cfg)
     elif framework_type in DETECTORS:
         return build_detector(cfg)
-    elif framework_type in SEGMENTATIONERS:
+    elif framework_type in SEGMENT:
         return build_segmentationer(cfg)
     elif framework_type in MULTIMODAL:
         return build_multimodal(cfg)

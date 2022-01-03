@@ -11,12 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from tools.utils import build_train_helper
 from ..metrics.ava_utils import collect_results_cpu
-import shutil
-import pickle
-import time
-import os
 import os.path as osp
 import time
 import warnings
@@ -24,18 +19,17 @@ import paddle
 import paddle.distributed as dist
 import paddle.distributed.fleet as fleet
 from paddlevideo.utils import (add_profiler_step, build_record, get_logger,
-                               load, log_batch, log_epoch, mkdir, save)
+                               load, log_batch, log_epoch, mkdir, save, build)
 
-from ..loader.builder import build_dataloader, build_dataset, build_custom_dataloader, build_sampler
+from ..loader.builder import build_dataloader, build_dataset
 from ..modeling.builder import build_model
+from ..modeling.framework.segment import ManetSegment_Stage2
 from ..solver import build_lr, build_optimizer
 from ..utils import do_preciseBN
 from paddlevideo.utils import get_logger
 from paddlevideo.utils import (build_record, log_batch, log_epoch, save, load,
                                mkdir)
-import sys
 import numpy as np
-from pathlib import Path
 
 paddle.framework.seed(1234)
 np.random.seed(1234)
@@ -49,9 +43,9 @@ def train_model(cfg,
                 use_fleet=False,
                 profiler_options=None):
     if cfg.get('max_iters'):
-
-        warnings.warn('afdas', Warning)
-
+        warnings.warn(
+            'max_iters is set, iter nums will decided by max_iters, not epochs ',
+            Warning)
     """Train model entry
 
     Args:
@@ -63,20 +57,24 @@ def train_model(cfg,
         use_fleet (bool):
         profiler_options (str): Activate the profiler function Default: None.
     """
-    if cfg.get('TRAIN'):
-        if cfg['TRAIN'].get('name'):
-            train_helper = {"name": cfg['TRAIN']['name']}
-            cfg['TRAIN'].pop('name')
-            train_helper.update(cfg)
-            build_train_helper(train_helper)(**cfg,
-                                             weights=None,
-                                             parallel=True,
-                                             validate=True,
-                                             amp=False,
-                                             use_fleet=False,
-                                             profiler_options=None)
-            return
-        cfg.MODEL.update({"TRAIN": cfg['TRAIN']})
+    if cfg.MODEL.framework == "ManetSegment_Stage1":
+        cfg_helper = {"knns": 1, "damage_initial_previous_frame_mask": True}
+        cfg.update(cfg_helper)
+    if cfg.MODEL.framework == "ManetSegment_Stage2":
+        cfg_helper = {
+            "knns": 1,
+            "damage_initial_previous_frame_mask": True,
+            "train_inter_use_true_result": True
+        }
+        cfg.update(cfg_helper)
+        ManetSegment_Stage2().train_step(**cfg,
+                                         weights=None,
+                                         parallel=True,
+                                         validate=True,
+                                         amp=False,
+                                         use_fleet=False,
+                                         profiler_options=None)
+        return
     if use_fleet:
         fleet.init(is_collective=True)
 
@@ -126,51 +124,27 @@ def train_model(cfg,
     if use_fleet:
         model = paddle.distributed_model(model)
 
-    # 2. Construct dataset and sampler
+    # 2. Construct dataset and dataloader
     train_dataset = build_dataset((cfg.DATASET.train, cfg.PIPELINE.train))
     train_dataloader_setting = dict(batch_size=batch_size,
                                     num_workers=num_workers,
                                     collate_fn_cfg=cfg.get('MIX', None),
                                     places=places)
-    if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train') and cfg.get(
-            'DATALOADER').get('train').get('sampler'):
-        sampler = cfg['DATALOADER']['train']['sampler']
-        sampler['dataset'] = train_dataset
-        sampler = build_sampler(sampler)
-        cfg['DATALOADER']['train'].pop('sampler')
-        train_dataloader_setting['sampler'] = sampler
-    train_dataloader_setting.update({'dataset': train_dataset})
-    train_loader = None
-    if cfg.get('DATALOADER') and cfg.get('DATALOADER').get('train'):
-        train_dataloader_setting.update(cfg['DATALOADER']['train'])
-        if cfg['DATALOADER']['train'].get('name'):
-            train_loader = build_custom_dataloader(**train_dataloader_setting)
-    if not train_loader:
-        train_loader = build_dataloader(**train_dataloader_setting)
+
+    train_loader = build_dataloader(train_dataset, **train_dataloader_setting)
     if validate:
         valid_dataset = build_dataset((cfg.DATASET.valid, cfg.PIPELINE.valid))
-        if cfg.get('DATALOADER').get('valid'):
-            if cfg.get('DATALOADER').get('valid').get('name'):
-                cfg_copy = cfg.DATALOADER.valid.copy()
-                cfg_copy['dataset'] = valid_dataset
-                valid_loader = build_custom_dataloader(cfg_copy)
-            else:
-                validate_dataloader_setting = cfg.get('DATALOADER').get('valid')
-                valid_loader = build_dataloader(valid_dataset,
-                                                **validate_dataloader_setting)
-        else:
-            validate_dataloader_setting = dict(
-                batch_size=valid_batch_size,
-                num_workers=valid_num_workers,
-                places=places,
-                drop_last=False,
-                sampler=cfg.DATASET.get('sampler', None),
-                shuffle=cfg.DATASET.get(
-                    'shuffle_valid',
-                    False)  # NOTE: attention lstm need shuffle valid data.
-            )
-            valid_loader = build_dataloader(valid_dataset,
-                                            **validate_dataloader_setting)
+        validate_dataloader_setting = dict(
+            batch_size=valid_batch_size,
+            num_workers=valid_num_workers,
+            places=places,
+            drop_last=False,
+            shuffle=cfg.DATASET.get(
+                'shuffle_valid',
+                False)  # NOTE: attention lstm need shuffle valid data.
+        )
+        valid_loader = build_dataloader(valid_dataset,
+                                        **validate_dataloader_setting)
 
     # 3. Construct solver.
     lr = build_lr(cfg.OPTIMIZER.learning_rate, len(train_loader))
@@ -251,8 +225,8 @@ def train_model(cfg,
                 optimizer.clear_grad()
 
             else:
-                if cfg.MODEL.framework == "ManetSegmentationer_Stage1":
-                    outputs = model(data, mode='train', step=tot_step)
+                if cfg.MODEL.framework == "ManetSegment_Stage1":
+                    outputs = model(data, mode='train', step=tot_step, **cfg)
                 else:
                     outputs = model(data, mode='train')
 
@@ -285,21 +259,24 @@ def train_model(cfg,
             if i % cfg.get("log_interval", 10) == 0:
                 ips = "ips: {:.5f} instance/sec.".format(
                     batch_size / record_list["batch_time"].val)
-                log_batch(record_list, i, epoch + 1, epochs, "train", ips, tot_step,max_iters)
+                log_batch(record_list, i, epoch + 1, epochs, "train", ips,
+                          tot_step, max_iters)
 
             # learning rate iter step
             if cfg.OPTIMIZER.learning_rate.get("iter_step"):
                 lr.step()
             if cfg.get("save_step"):
-                if tot_step and (tot_step % cfg.save_step == 0 or (max_iters and tot_step == max_iters - 1)):
+                if tot_step and (tot_step % cfg.save_step == 0 or
+                                 (max_iters and tot_step == max_iters - 1)):
                     save(
                         optimizer.state_dict(),
-                        osp.join(output_dir,
-                                 model_name + f"_step_{tot_step + 1:05d}.pdopt"))
+                        osp.join(output_dir, model_name +
+                                 f"_step_{tot_step + 1:05d}.pdopt"))
                     save(
                         model.state_dict(),
-                        osp.join(output_dir,
-                                 model_name + f"_step_{tot_step + 1:05d}.pdparams"))
+                        osp.join(
+                            output_dir,
+                            model_name + f"_step_{tot_step + 1:05d}.pdparams"))
         # learning rate epoch step
         if not cfg.OPTIMIZER.learning_rate.get("iter_step"):
             lr.step()
@@ -334,7 +311,8 @@ def train_model(cfg,
                 if i % cfg.get("log_interval", 10) == 0:
                     ips = "ips: {:.5f} instance/sec.".format(
                         valid_batch_size / record_list["batch_time"].val)
-                    log_batch(record_list, i, epoch + 1, epochs, "val", ips, tot_step, max_iters)
+                    log_batch(record_list, i, epoch + 1, epochs, "val", ips,
+                              tot_step, max_iters)
             if cfg.MODEL.framework == "FastRCNN":
                 if parallel:
                     results = collect_results_cpu(results, len(valid_dataset))
@@ -395,15 +373,15 @@ def train_model(cfg,
                     )
 
         # 6. Save model and optimizer
-        if cfg.save_interval:
+        if cfg.get('save_interval'):
             if epoch and epoch % cfg.save_interval == 0 or epoch == epochs - 1:
-                    save(
-                        optimizer.state_dict(),
-                        osp.join(output_dir,
-                                 model_name + f"_epoch_{epoch + 1:05d}.pdopt"))
-                    save(
-                        model.state_dict(),
-                        osp.join(output_dir,
-                                 model_name + f"_epoch_{epoch + 1:05d}.pdparams"))
+                save(
+                    optimizer.state_dict(),
+                    osp.join(output_dir,
+                             model_name + f"_epoch_{epoch + 1:05d}.pdopt"))
+                save(
+                    model.state_dict(),
+                    osp.join(output_dir,
+                             model_name + f"_epoch_{epoch + 1:05d}.pdparams"))
 
     logger.info(f'training {model_name} finished')

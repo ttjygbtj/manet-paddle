@@ -1,6 +1,6 @@
 [English](../../../en/model_zoo/partition/manet.md) | 简体中文
 
-# TransNetV2视频切分模型
+# Ma-Net视频切分模型
 
 ## 内容
 
@@ -21,7 +21,7 @@
 
 这是CVPR2020论文"[Memory aggregation networks for efficient interactive video object segmentation](https://arxiv.org/abs/2003.13246)"的Paddle实现。
 
-![头像](../../../图片/1836-预告片.gif）
+![avatar](../../../images/1836-teaser.gif)
 
 此代码目前支持在 DAVIS 数据集上进行模型测试和模型训练，并且将在之后提供对任何给定视频的模型推理。
 
@@ -47,7 +47,7 @@
 
    ```yaml
    MODEL: #MODEL field
-       framework: "ManetSegmentationer_Stage1"
+       framework: "ManetSegment_Stage1"
        backbone:
            name: "DeepLab"
            pretrained: fill in the path here
@@ -60,7 +60,7 @@
   - 您可以通过以下命令使用一张卡开始第一阶段的训练：
 
     ```bash
-    python main.py -c configs/segmentationer/manet_stage1.yaml
+    python main.py -c configs/segmentation/manet_stage1.yaml
     ```
 
   - 使用多张卡进行训练，以加快训练过程。训练开始命令如下：
@@ -68,7 +68,7 @@
     ```bash
     export CUDA_VISIBLE_DEVICES=0,1,2,3
 
-    python -B -m paddle.distributed.launch --gpus="0,1,2,3"  --log_dir=log_manet_stage1 main.py -c configs/segmentationer/manet_stage1.yaml
+    python -B -m paddle.distributed.launch --gpus="0,1,2,3"  --log_dir=log_manet_stage1 main.py -c configs/segmentation/manet_stage1.yaml
     ```
 
   - 使用混合精度训练以加快训练过程。训练开始命令如下：
@@ -79,7 +79,7 @@
     export FLAGS_cudnn_batchnorm_spatial_persistent=1
 
     # frames data format
-    python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4" --log_dir=log_manet_stage1 main.py --amp -c configs/segmentationer/manet_stage1.yaml
+    python3.7 -B -m paddle.distributed.launch --gpus="0,1,2,3,4" --log_dir=log_manet_stage1 main.py --amp -c configs/segmentation/manet_stage1.yaml
     ```
 
 - 使用第一阶段的模型训练结果，您可以使用一张卡开始训练第二阶段（其他训练方法，如多张卡或混合精度类似于上述），命令如下：
@@ -87,7 +87,7 @@
   ```bash
   export CUDA_VISIBLE_DEVICES=0,1,2,3
 
-  python -B -m paddle.distributed.launch --gpus="0,1,2,3"  --log_dir=log_manet_stage1 main.py  --validate -c configs/segmentationer/manet_stage2.yaml
+  python -B -m paddle.distributed.launch --gpus="0,1,2,3"  --log_dir=log_manet_stage1 main.py  --validate -c configs/segmentation/manet_stage2.yaml
   ```
 
 - 此外，您可以自定义和修改参数配置，以达到在不同数据集上训练/测试的目的。建议配置文件的命名方法是 `model_dataset name_file format_data format_sampling method.yaml` ，请参考 [config](../../tutorials/config.md) 配置参数的方法。
@@ -108,14 +108,12 @@ python main.py --test -c configs/localization/bmn.yaml -w output/BMN/BMN_epoch_0
 - 参数 `-w` 用于指定模型路径，您可以下载 [我们的模型](https://drive.google.com/file/d/1JjYNha40rtEYKKKFtDv06myvpxagl5dW/view?usp=sharing) 并解压缩以进行测试。
 
 
-Test accuracy in DAVIS2017:
+测试精度在 DAVIS2017上:
 
-| AR@1  | AR@5  | AR@10 | AR@100 |  AUC   |
-| :---: | :---: | :---: | :----: | :----: |
-| 33.26 | 49.48 | 56.86 | 75.19  | 67.23% |
+| J@60  |  AUC  |
+| :---: | :---: |
+| 0.761 | 0.749 |
 
-
-##
 
 
 ## 模型推理

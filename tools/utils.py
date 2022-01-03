@@ -46,9 +46,6 @@ from paddlevideo.metrics.bmn_metric import boundary_choose, soft_nms
 from paddlevideo.utils import Registry, build
 
 INFERENCE = Registry('inference')
-TRAIN = Registry('train')
-TEST = Registry('test')
-VALID = Registry('valid')
 
 
 def decode(filepath, args):
@@ -112,18 +109,6 @@ def postprocess(output, args):
 
 def build_inference_helper(cfg):
     return build(cfg, INFERENCE)
-
-
-def build_train_helper(cfg):
-    return build(cfg, TRAIN)
-
-
-def build_test_helper(cfg):
-    return build(cfg, TEST)
-
-
-def build_valid_helper(cfg):
-    return build(cfg, VALID)
 
 
 class Base_Inference_helper():

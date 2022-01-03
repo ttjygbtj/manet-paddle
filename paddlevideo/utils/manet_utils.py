@@ -1,5 +1,8 @@
 from __future__ import absolute_import
+
+import json
 import math
+import os
 import warnings
 
 import numpy
@@ -76,7 +79,7 @@ from paddle.vision.transforms import BaseTransform
 from paddle.vision.transforms import functional as F
 
 import numpy as np
-from scipy.ndimage import interpolation
+from scipy.ndimage import interpolation, binary_dilation
 from skimage import morphology
 from skimage import transform
 import paddle
@@ -118,6 +121,87 @@ def mask_damager(labels=None, p_black=0.2):
     return final_label
 
 
+color_map = [
+    [0, 0, 0],
+    [255, 127, 0],
+    [30, 144, 255],
+    [186, 85, 211],
+    [255, 105, 180],
+    [192, 255, 62],
+    [255, 105, 180],
+    [50, 255, 255],
+]
+
+color_map_np = np.array(color_map)
+
+
+def overlay_davis(image, mask, alpha=0.5):
+    """ Overlay segmentation on top of RGB image. from davis official"""
+    im_overlay = image.copy()
+    mask = mask.astype('uint8')
+    colored_mask = color_map_np[mask]
+    foreground = image * alpha + (1 - alpha) * colored_mask
+    binary_mask = (mask > 0)
+    # Compose image
+    im_overlay[binary_mask] = foreground[binary_mask]
+    countours = binary_dilation(binary_mask) ^ binary_mask
+    im_overlay[countours, :] = 0
+    return im_overlay.astype(image.dtype)
+
+
+# TODO
+def submit_masks(masks, images, inter_file_path):
+    save_result_path = os.path.join(inter_file_path, 'result')
+    os.makedirs(save_result_path, exist_ok=True)
+    for imgname, (mask, image) in enumerate(zip(masks, images)):
+        overlay = overlay_davis(image, mask)
+        overlay = Image.fromarray(overlay)
+        imgname = str(imgname)
+        while len(imgname) < 5:
+            imgname = '0' + imgname
+        overlay.save(os.path.join(save_result_path, imgname + '.png'))
+
+
+def load_video(path, min_side=None):
+    frame_list = []
+    cap = cv2.VideoCapture(path)
+    while (cap.isOpened()):
+        _, frame = cap.read()
+        if frame is None:
+            break
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if min_side:
+            h, w = frame.shape[:2]
+            new_w = (w * min_side // min(w, h))
+            new_h = (h * min_side // min(w, h))
+            frame = cv2.resize(frame, (new_w, new_h),
+                               interpolation=cv2.INTER_CUBIC)
+            # .transpose([2, 0, 1])
+        frame_list.append(frame)
+    frames = np.stack(frame_list, axis=0)
+    return frames
+
+
+def get_scribbles():
+    for i in range(8):
+        with open(f'/home/lc/paddlevideo/data/bike-packing/lable/{i + 1}.json'
+                  ) as f:
+            scribbles = json.load(f)
+            first_scribble = not i
+            yield scribbles, first_scribble
+
+
+def get_images(sequence='bike-packing'):
+    img_path = os.path.join('data', sequence.strip(), 'frame')
+    img_files = os.listdir(img_path)
+    img_files.sort()
+    files = []
+    for img in img_files:
+        img_file = np.array(Image.open(os.path.join(img_path, img)))
+        files.append(img_file)
+    return np.array(files)
+
+
 def rough_ROI(ref_scribble_labels):
     #### b*1*h*w
     dist = 20
@@ -140,8 +224,33 @@ def rough_ROI(ref_scribble_labels):
     return final_scribble_labels
 
 
+import os.path as osp
+
+
+def load(file_name, model, **cfg):
+    if not osp.isfile(file_name):
+        raise IOError(f'{file_name} not exist')
+    try:
+        state_dicts_ = paddle.load(file_name)['state_dict']
+    except:
+        state_dicts_ = paddle.load(file_name)
+    state_dicts = {}
+    for k in model.keys():
+        if 'num_batches_tracked' not in k:
+            if ('head.' + k) not in state_dicts_.keys():
+                if k not in state_dicts_.keys():
+                    print(f'model -----{k} -------is not in pretrained')
+                else:
+                    state_dicts[k] = state_dicts_[k]
+            else:
+                state_dicts[k] = state_dicts_['head.' + k]
+    write_dict(state_dicts, 'state_dicts.txt', **cfg)
+    write_dict(model, 'model.txt', **cfg)
+    return state_dicts
+
+
 #####
-def write_dict(state_dict, name, **cfg):
+def write_dict(state_dict, file_name, **cfg):
     lines = []
     tot = 0
     for k, v in state_dict.items():
@@ -155,7 +264,7 @@ def write_dict(state_dict, name, **cfg):
         except:
             line = str(k) + '\t' + str(v.shape) + '\n'
         lines.append(line)
-    with open(cfg.get("output_dir", f"./output/{name}"), 'w') as f:
+    with open(cfg.get("output_dir", f"./output/{file_name}"), 'w') as f:
         f.writelines(lines)
     # print('%d num_batches_tracked skipped' % tot)
 
